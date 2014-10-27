@@ -9,8 +9,8 @@ const (
 	builtins    = "BUILTINS"
 )
 
-// TypeSet turns an array of arguments into a []map[string]string
-// that can be given to Parse for it to do its magic.
+// TypeSet turns a type string into a []map[string]string
+// that can be given to parse.Types for it to do its magic.
 //
 // Acceptable args are:
 //
