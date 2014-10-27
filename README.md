@@ -99,3 +99,7 @@ func (q *StringQueue) Pop() string {
   return item
 }
 ```
+
+#### More examples
+
+Check out the [test code files](https://github.com/metabition/genny/tree/master/parse/test) for more real examples.
