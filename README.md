@@ -1,0 +1,4 @@
+genny
+=====
+
+Generics for Go
