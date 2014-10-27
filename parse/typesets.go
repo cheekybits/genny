@@ -10,7 +10,7 @@ const (
 )
 
 // TypeSet turns a type string into a []map[string]string
-// that can be given to parse.Types for it to do its magic.
+// that can be given to parse.Generics for it to do its magic.
 //
 // Acceptable args are:
 //

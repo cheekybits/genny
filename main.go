@@ -80,7 +80,7 @@ func gen(filename string, in io.ReadSeeker, typesets []map[string]string, out io
 	var output []byte
 	var err error
 
-	output, err = parse.Types(filename, in, typesets)
+	output, err = parse.Generics(filename, in, typesets)
 	if err != nil {
 		return err
 	}

@@ -147,9 +147,9 @@ func Parse(filename string, in io.ReadSeeker) ([]byte, error) {
 }
 */
 
-// Types parses the source file and generates the bytes replacing the
+// Generics parses the source file and generates the bytes replacing the
 // generic types for the keys map with the specific types (its value).
-func Types(filename string, in io.ReadSeeker, typeSets []map[string]string) ([]byte, error) {
+func Generics(filename string, in io.ReadSeeker, typeSets []map[string]string) ([]byte, error) {
 
 	totalOutput := header
 
