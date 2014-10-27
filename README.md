@@ -10,6 +10,7 @@ Until the Go core team include support for [generics in Go](http://golang.org/do
   * Use `stdin` and `stdout`
   * Multiple specific types will generate every permutation
   * Use `BUILTINS` wildtype to generate specific code for all built-in Go types
+  * Function names and comments also supported
 
 ## Usage
 
@@ -132,3 +133,72 @@ cat source.go | genny gen "Something=BUILTINS,*MyType"
 #### More examples
 
 Check out the [test code files](https://github.com/metabition/genny/tree/master/parse/test) for more real examples.
+
+## How it works
+
+Like [go fmt](http://golang.org/pkg/fmt/) and [goimports](http://godoc.org/code.google.com/p/go.tools/cmd/goimports) `genny gen` streams the source file in, and outputs a new file containing a version of the generic code for each specific type.
+
+This can then be easily redirected to a file, which can then be built as part of your packages or programs.
+
+It is recommended that you include your generic build code in a simple script like this:
+
+```
+#!/bin/bash
+./generic_thing.go | gogen GenericType=BUILTINS >> specific_thing.go
+go build -o program
+```
+
+## Writing test code
+
+Once you have defined a generic type with some code worth testing:
+
+```
+package slice
+
+import (
+  "log"
+  "reflect"
+
+  "github.com/stretchr/gogen/generic"
+)
+
+type MyType generic.Type
+
+func EnsureMyTypeSlice(objectOrSlice interface{}) []MyType {
+  log.Printf("%v", reflect.TypeOf(objectOrSlice))
+  switch obj := objectOrSlice.(type) {
+  case []MyType:
+    log.Println("  returning it untouched")
+    return obj
+  case MyType:
+    log.Println("  wrapping in slice")
+    return []MyType{obj}
+  default:
+    panic("ensure slice needs MyType or []MyType")
+  }
+}
+```
+
+You can treat it like any normal Go type in your test code:
+
+```
+func TestEnsureMyTypeSlice(t *testing.T) {
+
+  myType := new(MyType)
+  slice := EnsureMyTypeSlice(myType)
+  if assert.NotNil(t, slice) {
+    assert.Equal(t, slice[0], myType)
+  }
+
+  slice = EnsureMyTypeSlice(slice)
+  log.Printf("%#v", slice[0])
+  if assert.NotNil(t, slice) {
+    assert.Equal(t, slice[0], myType)
+  }
+
+}
+```
+
+### Understanding what `generic.Type` is
+
+Because `generic.Type` is an empty interface type (literally `interface{}`) every other type will be considered to be a `generic.Type` if you are switching on the type of an object. Of course, once the specific versions are generated, this issue goes away but it's worth knowing when you are writing your tests against generic code.
