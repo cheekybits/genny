@@ -1,7 +1,7 @@
 genny - Generics for Go
 =====
 
-(pron. Jenny) by Mat Ryer and Tyler Bunnell.
+(pron. Jenny) by Mat Ryer [@matryer](https://twitter.com/matryer) and Tyler Bunnell [@TylerJBunnell](https://twitter.com/TylerJBunnell).
 
 Until the Go core team include support for [generics in Go](http://golang.org/doc/faq#generics), `genny` is a code-generation generics solution. It allows you write normal buildable and testable Go code which, when processed by the `genny gen` tool, will replace the generics with specific types.
 
@@ -10,6 +10,23 @@ Until the Go core team include support for [generics in Go](http://golang.org/do
   * Use `stdin` and `stdout`
   * Multiple specific types will generate every permutation
   * Use `BUILTINS` wildtype to generate specific code for all built-in Go types
+
+## Usage
+
+```
+genny gen "{types}"
+
+gen - generates type specific code (to stdout) from generic code (via stdin)
+
+{types}  - (required) Specific types for each generic type in the source
+{types} format:  {generic}={specific}[,another][ {generic2}={specific2}]
+Examples:
+  Generic=Specific
+  Generic1=Specific1 Generic2=Specific2
+  Generic1=Specific1,Specific2 Generic2=Specific3,Specific4
+```
+
+  * Comma separated type lists will generate code for each type
 
 ## How it works
 
@@ -104,6 +121,12 @@ func (q *StringQueue) Pop() string {
   q.items = q.items[1:]
   return item
 }
+```
+
+To get a _something_ for every built-in Go type plus one of your own types, you could run:
+
+```
+cat source.go | genny gen "Something=BUILTINS,*MyType"
 ```
 
 #### More examples
