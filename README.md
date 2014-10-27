@@ -134,20 +134,6 @@ cat source.go | genny gen "Something=BUILTINS,*MyType"
 
 Check out the [test code files](https://github.com/metabition/genny/tree/master/parse/test) for more real examples.
 
-## How it works
-
-Like [go fmt](http://golang.org/pkg/fmt/) and [goimports](http://godoc.org/code.google.com/p/go.tools/cmd/goimports) `genny gen` streams the source file in, and outputs a new file containing a version of the generic code for each specific type.
-
-This can then be easily redirected to a file, which can then be built as part of your packages or programs.
-
-It is recommended that you include your generic build code in a simple script like this:
-
-```
-#!/bin/bash
-./generic_thing.go | gogen GenericType=BUILTINS >> specific_thing.go
-go build -o program
-```
-
 ## Writing test code
 
 Once you have defined a generic type with some code worth testing:
