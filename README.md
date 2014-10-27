@@ -39,7 +39,7 @@ The output will be the complete Go source file with the generic types replaced w
 
 ## Real example
 
-Given this generic Go code (NOTE: it compiles just fine):
+Given [this generic Go code](https://github.com/metabition/genny/tree/master/examples/queue) which compiles and is tested:
 
 ```
 package queue
