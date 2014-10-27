@@ -5,6 +5,12 @@ genny - Generics for Go
 
 Until the Go core team include support for [generics in Go](http://golang.org/doc/faq#generics), `genny` is a code-generation generics solution. It allows you write normal buildable and testable Go code which, when processed by the `genny gen` tool, will replace the generics with specific types.
 
+  * Generic code is valid Go code
+  * Generic code compiles and can be tested
+  * Use `stdin` and `stdout`
+  * Multiple specific types will generate every permutation
+  * Use `BUILTINS` wildtype to generate specific code for all built-in Go types
+
 ## How it works
 
 Define your generic types using the special `generic.Type` placeholder type:
@@ -32,7 +38,7 @@ Since `generic.Type` is a real Go type, your code will compile, and you can even
 Pass the file through the `genny gen` tool with the specific types as the argument:
 
 ```
-cat generic.go | genny gen "KeyType=string,ValueType=interface{}"
+cat generic.go | genny gen "KeyType=string ValueType=interface{}"
 ```
 
 The output will be the complete Go source file with the generic types replaced with the types specified in the arguments.
