@@ -1,8 +1,7 @@
-genny (pron. Jenny)
+genny - Generics for Go
 =====
 
-Elegant generics for Go.
-by Mat Ryer and Tyler Bunnell.
+(pron. Jenny) by Mat Ryer and Tyler Bunnell.
 
 Until the Go core team include support for [generics in Go](http://golang.org/doc/faq#generics), `genny` is a code-generation generics solution. It allows you write normal buildable and testable Go code which, when processed by the `genny gen` tool, will replace the generics with specific types.
 
