@@ -25,8 +25,6 @@ var Builtins = []string{
 }
 
 var Numbers = []string{
-	"complex128",
-	"complex64",
 	"float32",
 	"float64",
 	"int",
