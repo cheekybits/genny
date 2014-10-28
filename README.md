@@ -191,6 +191,6 @@ Because `generic.Type` is an empty interface type (literally `interface{}`) ever
 
 ### Contributions
 
-  * Read the [API documentation for the parse package](http://godoc.org/github.com/metabition/genny/parse)
+  * See the [API documentation for the parse package](http://godoc.org/github.com/metabition/genny/parse)
   * Please do TDD
   * All input welcome
