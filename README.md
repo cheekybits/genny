@@ -1,4 +1,8 @@
-genny - Generics for Go [![Build Status](https://travis-ci.org/metabition/genny.svg?branch=master)](https://travis-ci.org/metabition/genny)
+genny - Generics for Go 
+
+[![Build Status](https://travis-ci.org/metabition/genny.svg?branch=master)](https://travis-ci.org/metabition/genny) [![GoDoc](https://godoc.org/github.com/metabition/genny?status.png)](http://godoc.org/github.com/metabition/genny)
+
+
 =====
 
 (pron. Jenny) by Mat Ryer ([@matryer](https://twitter.com/matryer)) and Tyler Bunnell ([@TylerJBunnell](https://twitter.com/TylerJBunnell)).
