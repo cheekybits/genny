@@ -4,108 +4,84 @@
 
 package math
 
-type Float32Compare func(a, b float32) bool
-
-func Float32Max(fn Float32Compare, a, b float32) float32 {
+func Float32Max(fn func(a, b float32) bool, a, b float32) float32 {
 	if fn(a, b) {
 		return a
 	}
 	return b
 }
 
-type Float64Compare func(a, b float64) bool
-
-func Float64Max(fn Float64Compare, a, b float64) float64 {
+func Float64Max(fn func(a, b float64) bool, a, b float64) float64 {
 	if fn(a, b) {
 		return a
 	}
 	return b
 }
 
-type IntCompare func(a, b int) bool
-
-func IntMax(fn IntCompare, a, b int) int {
+func IntMax(fn func(a, b int) bool, a, b int) int {
 	if fn(a, b) {
 		return a
 	}
 	return b
 }
 
-type Int16Compare func(a, b int16) bool
-
-func Int16Max(fn Int16Compare, a, b int16) int16 {
+func Int16Max(fn func(a, b int16) bool, a, b int16) int16 {
 	if fn(a, b) {
 		return a
 	}
 	return b
 }
 
-type Int32Compare func(a, b int32) bool
-
-func Int32Max(fn Int32Compare, a, b int32) int32 {
+func Int32Max(fn func(a, b int32) bool, a, b int32) int32 {
 	if fn(a, b) {
 		return a
 	}
 	return b
 }
 
-type Int64Compare func(a, b int64) bool
-
-func Int64Max(fn Int64Compare, a, b int64) int64 {
+func Int64Max(fn func(a, b int64) bool, a, b int64) int64 {
 	if fn(a, b) {
 		return a
 	}
 	return b
 }
 
-type Int8Compare func(a, b int8) bool
-
-func Int8Max(fn Int8Compare, a, b int8) int8 {
+func Int8Max(fn func(a, b int8) bool, a, b int8) int8 {
 	if fn(a, b) {
 		return a
 	}
 	return b
 }
 
-type UintCompare func(a, b uint) bool
-
-func UintMax(fn UintCompare, a, b uint) uint {
+func UintMax(fn func(a, b uint) bool, a, b uint) uint {
 	if fn(a, b) {
 		return a
 	}
 	return b
 }
 
-type Uint16Compare func(a, b uint16) bool
-
-func Uint16Max(fn Uint16Compare, a, b uint16) uint16 {
+func Uint16Max(fn func(a, b uint16) bool, a, b uint16) uint16 {
 	if fn(a, b) {
 		return a
 	}
 	return b
 }
 
-type Uint32Compare func(a, b uint32) bool
-
-func Uint32Max(fn Uint32Compare, a, b uint32) uint32 {
+func Uint32Max(fn func(a, b uint32) bool, a, b uint32) uint32 {
 	if fn(a, b) {
 		return a
 	}
 	return b
 }
 
-type Uint64Compare func(a, b uint64) bool
-
-func Uint64Max(fn Uint64Compare, a, b uint64) uint64 {
+func Uint64Max(fn func(a, b uint64) bool, a, b uint64) uint64 {
 	if fn(a, b) {
 		return a
 	}
 	return b
 }
 
-type Uint8Compare func(a, b uint8) bool
-
-func Uint8Max(fn Uint8Compare, a, b uint8) uint8 {
+func Uint8Max(fn func(a, b uint8) bool, a, b uint8) uint8 {
 	if fn(a, b) {
 		return a
 	}
