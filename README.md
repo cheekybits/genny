@@ -1,4 +1,4 @@
-genny - Generics for Go 
+# genny - Generics for Go 
 
 [![Build Status](https://travis-ci.org/metabition/genny.svg?branch=master)](https://travis-ci.org/metabition/genny) [![GoDoc](https://godoc.org/github.com/metabition/genny?status.png)](http://godoc.org/github.com/metabition/genny)
 
