@@ -2,11 +2,11 @@ package math
 
 import "github.com/metabition/genny/generic"
 
-type NumberType generic.Number
+type ThisNumberType generic.Number
 
-type NumberTypeCompare func(a, b NumberType) bool
+type ThisNumberTypeCompare func(a, b ThisNumberType) bool
 
-func Max(fn NumberTypeCompare, a, b NumberType) NumberType {
+func ThisNumberTypeMax(fn ThisNumberTypeCompare, a, b ThisNumberType) ThisNumberType {
 	if fn(a, b) {
 		return a
 	}
