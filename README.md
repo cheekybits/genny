@@ -13,7 +13,7 @@ Until the Go core team include support for [generics in Go](http://golang.org/do
   * Generic code compiles and can be tested
   * Use `stdin` and `stdout`
   * Multiple specific types will generate every permutation
-  * Use `BUILTINS` wildtype to generate specific code for all built-in Go types
+  * Use `BUILTINS` and `NUMBERS` wildtype to generate specific code for all built-in (and number) Go types
   * Function names and comments also supported
 
 ## Usage
