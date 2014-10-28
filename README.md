@@ -188,3 +188,9 @@ func TestEnsureMyTypeSlice(t *testing.T) {
 ### Understanding what `generic.Type` is
 
 Because `generic.Type` is an empty interface type (literally `interface{}`) every other type will be considered to be a `generic.Type` if you are switching on the type of an object. Of course, once the specific versions are generated, this issue goes away but it's worth knowing when you are writing your tests against generic code.
+
+### Contributions
+
+  * Read the [API documentation for the parse package](http://godoc.org/github.com/metabition/genny/parse)
+  * Please do TDD
+  * All input welcome
