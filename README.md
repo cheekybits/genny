@@ -38,8 +38,8 @@ Examples:
 Define your generic types using the special `generic.Type` placeholder type:
 
 ```
-var KeyType generic.Type
-var ValueType generic.Type
+type KeyType generic.Type
+type ValueType generic.Type
 ```
 
   * You can use as many as you like
