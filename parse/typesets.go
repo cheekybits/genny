@@ -7,6 +7,7 @@ const (
 	keyValueSep = "="
 	valuesSep   = ","
 	builtins    = "BUILTINS"
+	numbers     = "NUMBERS"
 )
 
 // TypeSet turns a type string into a []map[string]string
@@ -34,6 +35,8 @@ func TypeSet(arg string) ([]map[string]string, error) {
 		for _, t := range strings.Split(segs[1], valuesSep) {
 			if t == builtins {
 				types[key] = append(types[key], Builtins...)
+			} else if t == numbers {
+				types[key] = append(types[key], Numbers...)
 			} else {
 				types[key] = append(types[key], t)
 			}

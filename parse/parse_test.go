@@ -59,6 +59,12 @@ var tests = []struct {
 		},
 		expectedOut: `test/multipletypesets/many_simplemaps.go`,
 	},
+	{
+		filename:    "generic_number.go",
+		in:          `test/numbers/generic_number.go`,
+		types:       []map[string]string{{"NumberType": "int"}},
+		expectedOut: `test/numbers/int_number.go`,
+	},
 }
 
 func TestParse(t *testing.T) {

@@ -23,3 +23,20 @@ var Builtins = []string{
 	"uint8",
 	"uintptr",
 }
+
+var Numbers = []string{
+	"complex128",
+	"complex64",
+	"float32",
+	"float64",
+	"int",
+	"int16",
+	"int32",
+	"int64",
+	"int8",
+	"uint",
+	"uint16",
+	"uint32",
+	"uint64",
+	"uint8",
+}

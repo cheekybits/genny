@@ -53,11 +53,11 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 				case *ast.SelectorExpr:
 					if name, ok := tt.X.(*ast.Ident); ok {
 						if name.Name == "generic" {
-							if tt.Sel.Name == "Type" {
-								if _, ok := typeSet[ts.Name.Name]; !ok {
-									return nil, &errMissingSpecificType{GenericType: ts.Name.Name}
-								}
+							//  if tt.Sel.Name == "Type" || tt.Sel.Name == "Number" {
+							if _, ok := typeSet[ts.Name.Name]; !ok {
+								return nil, &errMissingSpecificType{GenericType: ts.Name.Name}
 							}
+							//  }
 						}
 					}
 				}
@@ -76,7 +76,7 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 		l := scanner.Text()
 
 		// does this line contain generic.Type?
-		if strings.Contains(l, "generic.Type") {
+		if strings.Contains(l, "generic.Type") || strings.Contains(l, "generic.Number") {
 			continue
 		}
 
