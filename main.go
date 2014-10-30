@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 
@@ -32,6 +33,9 @@ func main() {
 	)
 	flag.Parse()
 	args := flag.Args()
+
+	log.Println(args)
+
 	if len(args) != 3 {
 		usage()
 		os.Exit(exitcodeInvalidArgs)
