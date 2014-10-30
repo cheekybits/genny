@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,37 +19,52 @@ import (
 */
 
 const (
-	exitcodeInvalidArgs    = 1
-	exitcodeInvalidTypeSet = 2
-	exitcodeStdinFailed    = 3
-	exitcodeGenFailed      = 4
+	exitcodeInvalidArgs       = 1
+	exitcodeInvalidTypeSet    = 2
+	exitcodeStdinFailed       = 3
+	exitcodeGenFailed         = 4
+	exitcodeSourceFileInvalid = 5
 )
 
 func main() {
-
-	if len(os.Args) != 3 {
+	var (
+		filename = flag.String("f", "", "file to parse instead of stdin")
+	)
+	flag.Parse()
+	args := flag.Args()
+	if len(args) != 3 {
 		usage()
 		os.Exit(exitcodeInvalidArgs)
 	}
-	if strings.ToLower(os.Args[1]) != "gen" {
+	if strings.ToLower(args[1]) != "gen" {
 		usage()
 		os.Exit(exitcodeInvalidArgs)
 	}
 
 	// parse the typesets
-	typeSets, err := parse.TypeSet(os.Args[2])
+	typeSets, err := parse.TypeSet(args[2])
 	if err != nil {
 		fatal(exitcodeInvalidTypeSet, err)
 	}
 
-	source, err := ioutil.ReadAll(os.Stdin)
-	if err != nil {
-		fatal(exitcodeStdinFailed, err)
+	if len(*filename) > 0 {
+		file, err := os.Open(*filename)
+		if err != nil {
+			fatal(exitcodeSourceFileInvalid, err)
+		}
+		defer file.Close()
+		err = gen(*filename, file, typeSets, os.Stdout)
+	} else {
+		source, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			fatal(exitcodeStdinFailed, err)
+		}
+		reader := bytes.NewReader(source)
+		err = gen("stdin", reader, typeSets, os.Stdout)
 	}
-	reader := bytes.NewReader(source)
 
 	// do the work
-	if err := gen("stdin", reader, typeSets, os.Stdout); err != nil {
+	if err != nil {
 		fatal(exitcodeGenFailed, err)
 	}
 
@@ -70,6 +86,7 @@ Examples:
 
 func fatal(code int, a ...interface{}) {
 	fmt.Println(a...)
+	flag.PrintDefaults()
 	os.Exit(code)
 }
 
