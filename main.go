@@ -82,11 +82,11 @@ Examples:
   Generic1=Specific1 Generic2=Specific2
   Generic1=Specific1,Specific2 Generic2=Specific3,Specific4
 `)
+	flag.PrintDefaults()
 }
 
 func fatal(code int, a ...interface{}) {
 	fmt.Println(a...)
-	flag.PrintDefaults()
 	os.Exit(code)
 }
 
