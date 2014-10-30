@@ -18,11 +18,10 @@ import (
 */
 
 const (
-	_ = iota
-	exitcodeInvalidArgs
-	exitcodeInvalidTypeSet
-	exitcodeStdinFailed
-	exitcodeGenFailed
+	exitcodeInvalidArgs    = 1
+	exitcodeInvalidTypeSet = 2
+	exitcodeStdinFailed    = 3
+	exitcodeGenFailed      = 4
 )
 
 func main() {
