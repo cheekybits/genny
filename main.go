@@ -73,7 +73,7 @@ func main() {
 func usage() {
 	fmt.Fprintln(os.Stderr, `usage: genny gen "{types}"
 
-gen - generates type specific code (to stdout) from generic code (via stdin)
+gen - generates type specific code (to stdout) from generic code (via stdin) or the file specified with the -f flag.
 
 {types}  - (required) Specific types for each generic type in the source
 {types} format:  {generic}={specific}[,another][ {generic2}={specific2}]
