@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 
@@ -34,19 +33,17 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 
-	log.Println(args)
-
-	if len(args) != 3 {
+	if len(args) != 2 {
 		usage()
 		os.Exit(exitcodeInvalidArgs)
 	}
-	if strings.ToLower(args[1]) != "gen" {
+	if strings.ToLower(args[0]) != "gen" {
 		usage()
 		os.Exit(exitcodeInvalidArgs)
 	}
 
 	// parse the typesets
-	typeSets, err := parse.TypeSet(args[2])
+	typeSets, err := parse.TypeSet(args[1])
 	if err != nil {
 		fatal(exitcodeInvalidTypeSet, err)
 	}
