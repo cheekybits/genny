@@ -83,8 +83,7 @@ Examples:
   Generic1=Specific1 Generic2=Specific2
   Generic1=Specific1,Specific2 Generic2=Specific3,Specific4
 
-Flags:
-`)
+Flags:`)
 	flag.PrintDefaults()
 }
 
