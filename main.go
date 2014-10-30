@@ -14,7 +14,7 @@ import (
 
 /*
 
-  source | genny gen "KeyType=string,int ValueType=string,int"
+  source | genny gen [-in=""] [-out=""] "KeyType=string,int ValueType=string,int"
 
 */
 
@@ -24,11 +24,13 @@ const (
 	exitcodeStdinFailed       = 3
 	exitcodeGenFailed         = 4
 	exitcodeSourceFileInvalid = 5
+	exitcodeDestFileFailed    = 6
 )
 
 func main() {
 	var (
-		filename = flag.String("f", "", "file to parse instead of stdin")
+		in  = flag.String("in", "", "file to parse instead of stdin")
+		out = flag.String("out", "", "file to save output to instead of stdout")
 	)
 	flag.Parse()
 	args := flag.Args()
@@ -48,20 +50,32 @@ func main() {
 		fatal(exitcodeInvalidTypeSet, err)
 	}
 
-	if len(*filename) > 0 {
-		file, err := os.Open(*filename)
+	var outWriter io.Writer
+	if len(*out) > 0 {
+		outFile, err := os.Create(*out)
+		if err != nil {
+			fatal(exitcodeDestFileFailed, err)
+		}
+		defer outFile.Close()
+		outWriter = outFile
+	} else {
+		outWriter = os.Stdout
+	}
+
+	if len(*in) > 0 {
+		file, err := os.Open(*in)
 		if err != nil {
 			fatal(exitcodeSourceFileInvalid, err)
 		}
 		defer file.Close()
-		err = gen(*filename, file, typeSets, os.Stdout)
+		err = gen(*in, file, typeSets, outWriter)
 	} else {
 		source, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
 			fatal(exitcodeStdinFailed, err)
 		}
 		reader := bytes.NewReader(source)
-		err = gen("stdin", reader, typeSets, os.Stdout)
+		err = gen("stdin", reader, typeSets, outWriter)
 	}
 
 	// do the work
@@ -74,7 +88,7 @@ func main() {
 func usage() {
 	fmt.Fprintln(os.Stderr, `usage: genny gen "{types}"
 
-gen - generates type specific code (to stdout) from generic code (via stdin) or the file specified with the -f flag.
+gen - generates type specific code from generic code.
 
 {types}  - (required) Specific types for each generic type in the source
 {types} format:  {generic}={specific}[,another][ {generic2}={specific2}]
