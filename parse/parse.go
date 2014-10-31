@@ -26,6 +26,9 @@ var header = []byte(`
 `)
 
 var packageKeyword = []byte("package")
+var unwantedLinePrefixes = [][]byte{
+	[]byte("//go:generate genny"),
+}
 
 func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]string) ([]byte, error) {
 
@@ -117,34 +120,6 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 	return buf.Bytes(), nil
 }
 
-/*
-const gogenTagPrefix string = "// +gogen "
-
-// Parse parses the source file and generates the bytes replacing the
-// generic types for the keys map with the specific types that it gets
-// from the comments in the file.  If such no comments were found, an
-// error will be returned.
-func Parse(filename string, in io.ReadSeeker) ([]byte, error) {
-
-	// look for:
-	//    // +gogen Generic=string,int
-	scanner := bufio.NewScanner(in)
-	for scanner.Scan() {
-		if strings.HasPrefix(scanner.Text(), gogenTagPrefix) {
-			line := strings.TrimPrefix(scanner.Text(), gogenTagPrefix)
-			types, err := ArgsToTypesets(strings.Split(line, " "))
-			if err != nil {
-				return nil, err
-			}
-			return Types(filename, in, types)
-		}
-	}
-
-	// couldn't find the comments
-	return nil, errMissingTypeInformation
-}
-*/
-
 // Generics parses the source file and generates the bytes replacing the
 // generic types for the keys map with the specific types (its value).
 func Generics(filename string, in io.ReadSeeker, typeSets []map[string]string) ([]byte, error) {
@@ -191,16 +166,17 @@ func Generics(filename string, in io.ReadSeeker, typeSets []map[string]string) (
 			continue
 		}
 
+		// check all unwantedLinePrefixes - and skip them
+		for _, prefix := range unwantedLinePrefixes {
+			if bytes.HasPrefix(scanner.Bytes(), prefix) {
+				continue
+			}
+		}
+
 		cleanOutputLines = append(cleanOutputLines, line(scanner.Text()))
 	}
 
 	cleanOutput := strings.Join(cleanOutputLines, "")
-
-	/*
-		log.Println("---------------------------------")
-		log.Println(string(cleanOutput))
-		log.Println("---------------------------------")
-	*/
 
 	// fix the imports
 	output, err := imports.Process(filename, []byte(cleanOutput), nil)

@@ -24,6 +24,7 @@ var Builtins = []string{
 	"uintptr",
 }
 
+// Numbers contains a slice of all built-in number types.
 var Numbers = []string{
 	"float32",
 	"float64",
