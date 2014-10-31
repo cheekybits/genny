@@ -25,7 +25,17 @@ var header = []byte(`
 
 `)
 
-var packageKeyword = []byte("package")
+var (
+	packageKeyword = []byte("package")
+	importKeyword  = []byte("import")
+	openBrace      = []byte("(")
+	closeBrace     = []byte(")")
+	space          = " "
+	genericPackage = "generic"
+	genericType    = "generic.Type"
+	genericNumber  = "generic.Number"
+	linefeed       = "\r\n"
+)
 var unwantedLinePrefixes = [][]byte{
 	[]byte("//go:generate genny"),
 }
@@ -55,7 +65,7 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 				switch tt := ts.Type.(type) {
 				case *ast.SelectorExpr:
 					if name, ok := tt.X.(*ast.Ident); ok {
-						if name.Name == "generic" {
+						if name.Name == genericPackage {
 							if _, ok := typeSet[ts.Name.Name]; !ok {
 								return nil, &errMissingSpecificType{GenericType: ts.Name.Name}
 							}
@@ -77,7 +87,7 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 		l := scanner.Text()
 
 		// does this line contain generic.Type?
-		if strings.Contains(l, "generic.Type") || strings.Contains(l, "generic.Number") {
+		if strings.Contains(l, genericType) || strings.Contains(l, genericNumber) {
 			continue
 		}
 
@@ -105,7 +115,7 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 
 					}
 
-					newLine = newLine + word + " "
+					newLine = newLine + word + space
 				}
 				l = newLine
 
@@ -138,7 +148,7 @@ func Generics(filename string, in io.ReadSeeker, typeSets []map[string]string) (
 
 	}
 
-	// ensure we don't have multiple package statements
+	// clean up the code line by line
 	packageFound := false
 	insideImportBlock := false
 	var cleanOutputLines []string
@@ -147,7 +157,7 @@ func Generics(filename string, in io.ReadSeeker, typeSets []map[string]string) (
 
 		// end of imports block?
 		if insideImportBlock {
-			if bytes.HasSuffix(scanner.Bytes(), []byte(")")) {
+			if bytes.HasSuffix(scanner.Bytes(), closeBrace) {
 				insideImportBlock = false
 			}
 			continue
@@ -159,8 +169,8 @@ func Generics(filename string, in io.ReadSeeker, typeSets []map[string]string) (
 			} else {
 				packageFound = true
 			}
-		} else if bytes.HasPrefix(scanner.Bytes(), []byte("import")) {
-			if bytes.HasSuffix(scanner.Bytes(), []byte("(")) {
+		} else if bytes.HasPrefix(scanner.Bytes(), importKeyword) {
+			if bytes.HasSuffix(scanner.Bytes(), openBrace) {
 				insideImportBlock = true
 			}
 			continue
@@ -188,7 +198,7 @@ func Generics(filename string, in io.ReadSeeker, typeSets []map[string]string) (
 }
 
 func line(s string) string {
-	return fmt.Sprintln(strings.TrimRight(s, "\n\r"))
+	return fmt.Sprintln(strings.TrimRight(s, linefeed))
 }
 
 // isAlphaNumeric gets whether the rune is alphanumeric or _.
