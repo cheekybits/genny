@@ -4,15 +4,11 @@
 
 package gogenerate
 
-//go:generate genny -in=$GOFILE -out=gen-$GOFILE gen "string=string,int string=string,int"
-
 type StringStringMap map[string]string
 
 func NewStringStringMap() map[string]string {
 	return make(map[string]string)
 }
-
-//go:generate genny -in=$GOFILE -out=gen-$GOFILE gen "string=string,int int=string,int"
 
 type StringIntMap map[string]int
 
@@ -20,15 +16,11 @@ func NewStringIntMap() map[string]int {
 	return make(map[string]int)
 }
 
-//go:generate genny -in=$GOFILE -out=gen-$GOFILE gen "int=string,int string=string,int"
-
 type IntStringMap map[int]string
 
 func NewIntStringMap() map[int]string {
 	return make(map[int]string)
 }
-
-//go:generate genny -in=$GOFILE -out=gen-$GOFILE gen "int=string,int int=string,int"
 
 type IntIntMap map[int]int
 
