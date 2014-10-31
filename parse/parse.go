@@ -37,7 +37,7 @@ var (
 	linefeed       = "\r\n"
 )
 var unwantedLinePrefixes = [][]byte{
-	[]byte("//go:generate genny"),
+	[]byte("//go:generate genny "),
 }
 
 func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]string) ([]byte, error) {
@@ -177,10 +177,16 @@ func Generics(filename string, in io.ReadSeeker, typeSets []map[string]string) (
 		}
 
 		// check all unwantedLinePrefixes - and skip them
+		skipline := false
 		for _, prefix := range unwantedLinePrefixes {
 			if bytes.HasPrefix(scanner.Bytes(), prefix) {
+				skipline = true
 				continue
 			}
+		}
+
+		if skipline {
+			continue
 		}
 
 		cleanOutputLines = append(cleanOutputLines, line(scanner.Text()))
