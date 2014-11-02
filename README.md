@@ -63,6 +63,8 @@ Now, running `go generate` (in a shell) for the package will cause the generic v
   * Use `$GOFILE` to refer to the current file
   * The `//go:generate` line will be revmoed from the output
 
+To see a real example of how to use `genny` with `go generate`, look in the [example/go-generate directory](https://github.com/metabition/genny/tree/master/examples/go-generate).
+
 ## How it works
 
 Define your generic types using the special `generic.Type` placeholder type:
