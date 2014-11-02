@@ -20,10 +20,11 @@ Until the Go core team include support for [generics in Go](http://golang.org/do
 ## Usage
 
 ```
-genny gen "{types}"
+genny [{flags}] gen "{types}"
 
 gen - generates type specific code (to stdout) from generic code (via stdin)
 
+{flags}  - Command line flags (see below)
 {types}  - (required) Specific types for each generic type in the source
 {types} format:  {generic}={specific}[,another][ {generic2}={specific2}]
 Examples:
@@ -33,6 +34,29 @@ Examples:
 ```
 
   * Comma separated type lists will generate code for each type
+
+### Flags
+
+  * `-in` - specify the input file (rather than using stdin)
+  * `-out` - specify the output file (rather than using stdout)
+
+### go generate
+
+If you wish to use Go 1.4's `go generate` capability, insert the following comment in your source code file:
+
+```
+//go:generate genny -in=$GOFILE -out=gen-$GOFILE gen "KeyType=string,int ValueType=string,int"
+```
+
+  * Start the line with `//go:generate `
+  * Use the `-in` and `-out` flags to specify the files to work on
+  * Use the `genny` command as usual after the flags
+
+Now, running `go generate` (in a shell) for the package will cause the generic versions of the files to be generated.
+
+  * The output file will be overwritten, so it's safe to call `go generate` many times
+  * Use `$GOFILE` to refer to the current file
+  * The `//go:generate` line will be revmoed from the output
 
 ## How it works
 
