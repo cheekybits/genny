@@ -47,7 +47,7 @@ Flags:
 
 ### go generate
 
-If you wish to use Go 1.4's `go generate` capability, insert the following comment in your source code file:
+To use Go 1.4's `go generate` capability, insert the following comment in your source code file:
 
 ```
 //go:generate genny -in=$GOFILE -out=gen-$GOFILE gen "KeyType=string,int ValueType=string,int"
