@@ -1,2 +1,2 @@
-// Package generic contains the generic.Type marker type.
+// Package generic contains the generic marker types.
 package generic
