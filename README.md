@@ -24,7 +24,9 @@ Until the Go core team include support for [generics in Go](http://golang.org/do
 
 ## Library
 
-We have started building a [library of common things](https://github.com/cheekybits/gennylib), and you can use `wget` to generate the specific versions you need.
+We have started building a [library of common things](https://github.com/cheekybits/gennylib), and you can use `genny get` to generate the specific versions you need.
+
+For example: `genny get maps/concurrentmap.go "KeyType=BUILTINS ValueType=BUILTINS"` will print out generated code for all types for a concurrent map. Any file in the library may be generated locally in this way using all the same options given to `genny gen`.
 
 ## Usage
 

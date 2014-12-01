@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strings"
 
@@ -19,12 +20,14 @@ import (
 */
 
 const (
-	exitcodeInvalidArgs       = 1
-	exitcodeInvalidTypeSet    = 2
-	exitcodeStdinFailed       = 3
-	exitcodeGenFailed         = 4
-	exitcodeSourceFileInvalid = 5
-	exitcodeDestFileFailed    = 6
+	_ = iota
+	exitcodeInvalidArgs
+	exitcodeInvalidTypeSet
+	exitcodeStdinFailed
+	exitcodeGenFailed
+	exitcodeGetFailed
+	exitcodeSourceFileInvalid
+	exitcodeDestFileFailed
 )
 
 func main() {
@@ -32,21 +35,27 @@ func main() {
 		in      = flag.String("in", "", "file to parse instead of stdin")
 		out     = flag.String("out", "", "file to save output to instead of stdout")
 		pkgName = flag.String("pkg", "", "package name for generated files")
+		prefix  = "https://github.com/metabition/gennylib/raw/master/"
 	)
 	flag.Parse()
 	args := flag.Args()
 
-	if len(args) != 2 {
+	if len(args) < 2 {
 		usage()
 		os.Exit(exitcodeInvalidArgs)
 	}
-	if strings.ToLower(args[0]) != "gen" {
+
+	if strings.ToLower(args[0]) != "gen" && strings.ToLower(args[0]) != "get" {
 		usage()
 		os.Exit(exitcodeInvalidArgs)
 	}
 
 	// parse the typesets
-	typeSets, err := parse.TypeSet(args[1])
+	var setsArg = args[1]
+	if strings.ToLower(args[0]) == "get" {
+		setsArg = args[2]
+	}
+	typeSets, err := parse.TypeSet(setsArg)
 	if err != nil {
 		fatal(exitcodeInvalidTypeSet, err)
 	}
@@ -63,7 +72,24 @@ func main() {
 		outWriter = os.Stdout
 	}
 
-	if len(*in) > 0 {
+	if strings.ToLower(args[0]) == "get" {
+		if len(args) != 3 {
+			fmt.Println("not enough arguments to get")
+			usage()
+			os.Exit(exitcodeInvalidArgs)
+		}
+		r, err := http.Get(prefix + args[1])
+		if err != nil {
+			fatal(exitcodeGetFailed, err)
+		}
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			fatal(exitcodeGetFailed, err)
+		}
+		r.Body.Close()
+		br := bytes.NewReader(b)
+		err = gen(*in, *pkgName, br, typeSets, outWriter)
+	} else if len(*in) > 0 {
 		var file *os.File
 		file, err = os.Open(*in)
 		if err != nil {
@@ -92,6 +118,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, `usage: genny [{flags}] gen "{types}"
 
 gen - generates type specific code from generic code.
+get <package/file> - fetch a generic template from the online library and gen it
 
 {types}  - (optional) Command line flags (see below)
 {types}  - (required) Specific types for each generic type in the source
