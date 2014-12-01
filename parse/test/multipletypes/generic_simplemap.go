@@ -1,6 +1,6 @@
 package multipletypes
 
-import "github.com/metabition/genny/generic"
+import "github.com/cheekybits/genny/generic"
 
 type KeyType generic.Type
 type ValueType generic.Type

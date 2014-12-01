@@ -1,6 +1,6 @@
 package queue
 
-import "github.com/metabition/genny/generic"
+import "github.com/cheekybits/genny/generic"
 
 type Something generic.Type
 

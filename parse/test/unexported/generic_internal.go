@@ -3,7 +3,7 @@ package unexported
 import (
 	"fmt"
 
-	"github.com/metabition/genny/generic"
+	"github.com/cheekybits/genny/generic"
 )
 
 type secret generic.Type

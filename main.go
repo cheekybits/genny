@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/metabition/genny/parse"
+	"github.com/cheekybits/genny/parse"
 )
 
 /*

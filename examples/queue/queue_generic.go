@@ -1,6 +1,6 @@
 package example
 
-import "github.com/metabition/genny/generic"
+import "github.com/cheekybits/genny/generic"
 
 type Generic generic.Type
 
