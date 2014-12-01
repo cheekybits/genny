@@ -17,6 +17,10 @@ Until the Go core team include support for [generics in Go](http://golang.org/do
   * Use `BUILTINS` and `NUMBERS` wildtype to generate specific code for all built-in (and number) Go types
   * Function names and comments also supported
 
+## Library
+
+We have started building a [library of common things](https://github.com/metabition/gennylib), and you can use `wget` to generate the specific versions you need.
+
 ## Usage
 
 ```
