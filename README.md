@@ -2,6 +2,11 @@
 
 [![Build Status](https://travis-ci.org/metabition/genny.svg?branch=master)](https://travis-ci.org/metabition/genny) [![GoDoc](https://godoc.org/github.com/cheekybits/genny?status.png)](http://godoc.org/github.com/cheekybits/genny)
 
+Install:
+
+```
+go get github.com/cheekybits/genny
+```
 
 =====
 
