@@ -1,6 +1,6 @@
-# genny - Generics for Go 
+# genny - Generics for Go
 
-[![Build Status](https://travis-ci.org/metabition/genny.svg?branch=master)](https://travis-ci.org/metabition/genny) [![GoDoc](https://godoc.org/github.com/cheekybits/genny/parse?status.png)](http://godoc.org/github.com/cheekybits/genny/parse)
+[![Build Status](https://travis-ci.org/cheekybits/genny.svg?branch=master)](https://travis-ci.org/cheekybits/genny) [![GoDoc](https://godoc.org/github.com/cheekybits/genny/parse?status.png)](http://godoc.org/github.com/cheekybits/genny/parse)
 
 Install:
 
