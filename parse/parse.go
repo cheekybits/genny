@@ -215,6 +215,7 @@ func isAlphaNumeric(r rune) bool {
 // wordify turns a type into a nice word for function and type
 // names etc.
 func wordify(s string, exported bool) string {
+	s = strings.TrimRight(s, "{}")
 	s = strings.TrimLeft(s, "*&")
 	if !exported {
 		return s

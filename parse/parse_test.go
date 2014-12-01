@@ -41,6 +41,12 @@ var tests = []struct {
 	{
 		filename:    "generic_simplemap.go",
 		in:          `test/multipletypes/generic_simplemap.go`,
+		types:       []map[string]string{{"KeyType": "interface{}", "ValueType": "int"}},
+		expectedOut: `test/multipletypes/interface_int_simplemap.go`,
+	},
+	{
+		filename:    "generic_simplemap.go",
+		in:          `test/multipletypes/generic_simplemap.go`,
 		types:       []map[string]string{{"KeyType": "*MyType1", "ValueType": "*MyOtherType"}},
 		expectedOut: `test/multipletypes/custom_types_simplemap.go`,
 	},

@@ -63,4 +63,12 @@ func TestArgsToTypeset(t *testing.T) {
 		assert.Equal(t, 10, len(ts))
 	}
 
+	ts, err = parse.TypeSet("Person=interface{} Animal=interface{} Place=interface{}")
+	if assert.NoError(t, err) {
+		assert.Equal(t, 1, len(ts))
+		assert.Equal(t, ts[0]["Animal"], "interface{}")
+		assert.Equal(t, ts[0]["Person"], "interface{}")
+		assert.Equal(t, ts[0]["Place"], "interface{}")
+	}
+
 }

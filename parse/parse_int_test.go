@@ -20,11 +20,12 @@ func TestIsAlphaNumeric(t *testing.T) {
 func TestWordify(t *testing.T) {
 
 	for word, wordified := range map[string]string{
-		"int":     "Int",
-		"*int":    "Int",
-		"string":  "String",
-		"*MyType": "MyType",
-		"*myType": "MyType",
+		"int":         "Int",
+		"*int":        "Int",
+		"string":      "String",
+		"*MyType":     "MyType",
+		"*myType":     "MyType",
+		"interface{}": "Interface",
 	} {
 		assert.Equal(t, wordified, wordify(word, true))
 	}
