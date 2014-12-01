@@ -63,14 +63,16 @@ func main() {
 	}
 
 	if len(*in) > 0 {
-		file, err := os.Open(*in)
+		var file *os.File
+		file, err = os.Open(*in)
 		if err != nil {
 			fatal(exitcodeSourceFileInvalid, err)
 		}
 		defer file.Close()
 		err = gen(*in, file, typeSets, outWriter)
 	} else {
-		source, err := ioutil.ReadAll(os.Stdin)
+		var source []byte
+		source, err = ioutil.ReadAll(os.Stdin)
 		if err != nil {
 			fatal(exitcodeStdinFailed, err)
 		}
