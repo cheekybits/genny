@@ -14,7 +14,7 @@ import (
 
 /*
 
-  source | genny gen [-in=""] [-out=""] "KeyType=string,int ValueType=string,int"
+  source | genny gen [-in=""] [-out=""] [-pkg=""] "KeyType=string,int ValueType=string,int"
 
 */
 
@@ -29,8 +29,9 @@ const (
 
 func main() {
 	var (
-		in  = flag.String("in", "", "file to parse instead of stdin")
-		out = flag.String("out", "", "file to save output to instead of stdout")
+		in      = flag.String("in", "", "file to parse instead of stdin")
+		out     = flag.String("out", "", "file to save output to instead of stdout")
+		pkgName = flag.String("pkg", "", "package name for generated files")
 	)
 	flag.Parse()
 	args := flag.Args()
@@ -69,7 +70,7 @@ func main() {
 			fatal(exitcodeSourceFileInvalid, err)
 		}
 		defer file.Close()
-		err = gen(*in, file, typeSets, outWriter)
+		err = gen(*in, *pkgName, file, typeSets, outWriter)
 	} else {
 		var source []byte
 		source, err = ioutil.ReadAll(os.Stdin)
@@ -77,7 +78,7 @@ func main() {
 			fatal(exitcodeStdinFailed, err)
 		}
 		reader := bytes.NewReader(source)
-		err = gen("stdin", reader, typeSets, outWriter)
+		err = gen("stdin", *pkgName, reader, typeSets, outWriter)
 	}
 
 	// do the work
@@ -111,12 +112,12 @@ func fatal(code int, a ...interface{}) {
 }
 
 // gen performs the generic generation.
-func gen(filename string, in io.ReadSeeker, typesets []map[string]string, out io.Writer) error {
+func gen(filename, pkgName string, in io.ReadSeeker, typesets []map[string]string, out io.Writer) error {
 
 	var output []byte
 	var err error
 
-	output, err = parse.Generics(filename, in, typesets)
+	output, err = parse.Generics(filename, pkgName, in, typesets)
 	if err != nil {
 		return err
 	}

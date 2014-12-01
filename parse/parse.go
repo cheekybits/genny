@@ -132,7 +132,7 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 
 // Generics parses the source file and generates the bytes replacing the
 // generic types for the keys map with the specific types (its value).
-func Generics(filename string, in io.ReadSeeker, typeSets []map[string]string) ([]byte, error) {
+func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]string) ([]byte, error) {
 
 	totalOutput := header
 
@@ -194,8 +194,15 @@ func Generics(filename string, in io.ReadSeeker, typeSets []map[string]string) (
 
 	cleanOutput := strings.Join(cleanOutputLines, "")
 
+	output := []byte(cleanOutput)
+	var err error
+
+	// change package name
+	if pkgName != "" {
+		output = changePackage(bytes.NewReader([]byte(output)), pkgName)
+	}
 	// fix the imports
-	output, err := imports.Process(filename, []byte(cleanOutput), nil)
+	output, err = imports.Process(filename, output, nil)
 	if err != nil {
 		return nil, &errImports{Err: err}
 	}
@@ -221,4 +228,24 @@ func wordify(s string, exported bool) string {
 		return s
 	}
 	return strings.ToUpper(string(s[0])) + s[1:]
+}
+
+func changePackage(r io.Reader, pkgName string) []byte {
+	var out bytes.Buffer
+	sc := bufio.NewScanner(r)
+	done := false
+
+	for sc.Scan() {
+		s := sc.Text()
+
+		if !done && strings.HasPrefix(s, "package") {
+			parts := strings.Split(s, " ")
+			parts[1] = pkgName
+			s = strings.Join(parts, " ")
+			done = true
+		}
+
+		fmt.Fprintln(&out, s)
+	}
+	return out.Bytes()
 }

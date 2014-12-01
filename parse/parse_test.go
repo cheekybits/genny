@@ -13,6 +13,7 @@ import (
 var tests = []struct {
 	// input
 	filename string
+	pkgName  string
 	in       string
 	types    []map[string]string
 
@@ -25,6 +26,13 @@ var tests = []struct {
 		in:          `test/queue/generic_queue.go`,
 		types:       []map[string]string{{"Something": "int"}},
 		expectedOut: `test/queue/int_queue.go`,
+	},
+	{
+		filename:    "generic_queue.go",
+		pkgName:     "changed",
+		in:          `test/queue/generic_queue.go`,
+		types:       []map[string]string{{"Something": "int"}},
+		expectedOut: `test/queue/int_queue_newpkg.go`,
 	},
 	{
 		filename:    "generic_queue.go",
@@ -80,7 +88,7 @@ func TestParse(t *testing.T) {
 		test.in = contents(test.in)
 		test.expectedOut = contents(test.expectedOut)
 
-		bytes, err := parse.Generics(test.filename, strings.NewReader(test.in), test.types)
+		bytes, err := parse.Generics(test.filename, test.pkgName, strings.NewReader(test.in), test.types)
 
 		// check the error
 		if test.expectedErr == nil {
