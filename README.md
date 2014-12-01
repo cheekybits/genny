@@ -20,7 +20,7 @@ Until the Go core team include support for [generics in Go](http://golang.org/do
   * Supports Go 1.4's [go generate](http://tip.golang.org/doc/go1.4#gogenerate)
   * Multiple specific types will generate every permutation
   * Use `BUILTINS` and `NUMBERS` wildtype to generate specific code for all built-in (and number) Go types
-  * Function names and comments also supported
+  * Function names and comments also get updated
 
 ## Library
 
