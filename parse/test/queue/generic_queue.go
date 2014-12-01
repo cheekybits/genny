@@ -2,6 +2,7 @@ package queue
 
 import "github.com/cheekybits/genny/generic"
 
+// Something is a type that does something
 type Something generic.Type
 
 // SomethingQueue is a queue of Somethings.

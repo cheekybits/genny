@@ -81,6 +81,7 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 
 	var buf bytes.Buffer
 
+	comment := ""
 	scanner := bufio.NewScanner(in)
 	for scanner.Scan() {
 
@@ -88,6 +89,7 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 
 		// does this line contain generic.Type?
 		if strings.Contains(l, genericType) || strings.Contains(l, genericNumber) {
+			comment = ""
 			continue
 		}
 
@@ -118,8 +120,20 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 					newLine = newLine + word + space
 				}
 				l = newLine
-
 			}
+		}
+
+		if comment != "" {
+			buf.WriteString(line(comment))
+			comment = ""
+		}
+
+		// is this line a comment?
+		// TODO: should we handle /* */ comments?
+		if strings.HasPrefix(l, "//") {
+			// record this line to print later
+			comment = l
+			continue
 		}
 
 		// write the line
