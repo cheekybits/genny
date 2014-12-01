@@ -33,10 +33,10 @@ genny [{flags}] gen "{types}"
 
 gen - generates type specific code from generic code.
 
-{flags}  - (optional) Command line flags (see below)
+{types}  - (optional) Command line flags (see below)
 {types}  - (required) Specific types for each generic type in the source
-
 {types} format:  {generic}={specific}[,another][ {generic2}={specific2}]
+
 Examples:
   Generic=Specific
   Generic1=Specific1 Generic2=Specific2
@@ -45,6 +45,7 @@ Examples:
 Flags:
   -in="": file to parse instead of stdin
   -out="": file to save output to instead of stdout
+  -pkg="": package name for generated files
 ```
 
   * Comma separated type lists will generate code for each type
