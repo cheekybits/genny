@@ -34,6 +34,7 @@ For example: `genny get maps/concurrentmap.go "KeyType=BUILTINS ValueType=BUILTI
 genny [{flags}] gen "{types}"
 
 gen - generates type specific code from generic code.
+get <package/file> - fetch a generic template from the online library and gen it.
 
 {types}  - (optional) Command line flags (see below)
 {types}  - (required) Specific types for each generic type in the source
