@@ -12,7 +12,7 @@ import (
 	"strings"
 	"unicode"
 
-	"code.google.com/p/go.tools/imports"
+	"golang.org/x/tools/imports"
 )
 
 type isExported bool
