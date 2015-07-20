@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/cheekybits/genny/parse"
+	"golang.org/x/tools/imports"
 )
 
 /*
@@ -149,6 +150,13 @@ func gen(filename, pkgName string, in io.ReadSeeker, typesets []map[string]strin
 		return err
 	}
 
-	out.Write(output)
+	// add goimports fix for adding lost dependency
+	res, err := imports.Process(filename, output, nil)
+
+	if err != nil {
+		panic(err)
+	}
+
+	out.Write(res)
 	return nil
 }
