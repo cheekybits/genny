@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cheekybits/genny/parse"
+	"github.com/avoronkov/genny/parse"
 )
 
 /*
@@ -35,8 +35,10 @@ func main() {
 		in      = flag.String("in", "", "file to parse instead of stdin")
 		out     = flag.String("out", "", "file to save output to instead of stdout")
 		pkgName = flag.String("pkg", "", "package name for generated files")
+		imports Strings
 		prefix  = "https://github.com/metabition/gennylib/raw/master/"
 	)
+	flag.Var(&imports, "imp", "spcify imports explicitly")
 	flag.Parse()
 	args := flag.Args()
 
@@ -128,6 +130,7 @@ Examples:
   Generic=Specific
   Generic1=Specific1 Generic2=Specific2
   Generic1=Specific1,Specific2 Generic2=Specific3,Specific4
+  Generic=SpecificTitle:package.Type,AnotherSpecific
 
 Flags:`)
 	flag.PrintDefaults()
@@ -150,5 +153,17 @@ func gen(filename, pkgName string, in io.ReadSeeker, typesets []map[string]strin
 	}
 
 	out.Write(output)
+	return nil
+}
+
+// List of strings for flag
+type Strings []string
+
+func (i Strings) String() string {
+	return strings.Join([]string(i), ", ")
+}
+
+func (i *Strings) Set(value string) error {
+	*i = append(*i, value)
 	return nil
 }

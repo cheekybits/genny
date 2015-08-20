@@ -114,7 +114,7 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 								word = strings.Replace(word, t, wordify(specificType, unicode.IsUpper(rune(strings.TrimLeft(word, "*&")[0]))), 1)
 							} else {
 								// replace the word as is
-								word = strings.Replace(word, t, specificType, 1)
+								word = strings.Replace(word, t, typify(specificType), 1)
 							}
 
 						} else {
@@ -240,13 +240,27 @@ func isAlphaNumeric(r rune) bool {
 
 // wordify turns a type into a nice word for function and type
 // names etc.
+// If s matches format `<Title>:<Type>` then <Title> is returned
 func wordify(s string, exported bool) string {
+	if sepIdx := strings.Index(s, ":"); sepIdx >= 0 {
+		return s[:sepIdx]
+	}
 	s = strings.TrimRight(s, "{}")
 	s = strings.TrimLeft(s, "*&")
+	s = strings.Replace(s, ".", "", -1)
 	if !exported {
 		return s
 	}
 	return strings.ToUpper(string(s[0])) + s[1:]
+}
+
+// typify gets type name from string.
+// if string contains ":" then right part is returned otherwise string itself is returned
+func typify(s string) string {
+	if sepIdx := strings.Index(s, ":"); sepIdx >= 0 {
+		return s[sepIdx+1:]
+	}
+	return s
 }
 
 func changePackage(r io.Reader, pkgName string) []byte {
