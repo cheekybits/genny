@@ -9,6 +9,7 @@ import (
 	"go/token"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 	"unicode"
 
@@ -83,13 +84,34 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 
 	comment := ""
 	scanner := bufio.NewScanner(in)
+	reInterfaceBegin := regexp.MustCompile(`^\s*type\s+\w+\s+interface\s*\{`)
+	reInterfaceEnd := regexp.MustCompile(`^\s*\}`)
+	var interfaceLines []string
+	interfaceContainsType := false
 	for scanner.Scan() {
 
 		l := scanner.Text()
 
+		if reInterfaceBegin.MatchString(l) {
+			interfaceLines = []string{l}
+		}
+
+		if len(interfaceLines) > 0 && reInterfaceEnd.MatchString(l) {
+			if !interfaceContainsType {
+				for _, li := range append(interfaceLines, l) {
+					buf.WriteString(li)
+				}
+			}
+			interfaceLines, interfaceContainsType = nil, false
+			continue
+		}
+
 		// does this line contain generic.Type?
 		if strings.Contains(l, genericType) || strings.Contains(l, genericNumber) {
 			comment = ""
+			if len(interfaceLines) > 0 {
+				interfaceContainsType = true
+			}
 			continue
 		}
 
@@ -142,7 +164,11 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 		}
 
 		// write the line
-		buf.WriteString(line(l))
+		if len(interfaceLines) > 0 {
+			interfaceLines = append(interfaceLines, l)
+		} else {
+			buf.WriteString(line(l))
+		}
 	}
 
 	// write it out
