@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	"github.com/avoronkov/genny/parse"
@@ -28,9 +29,26 @@ const (
 	exitcodeGetFailed
 	exitcodeSourceFileInvalid
 	exitcodeDestFileFailed
+	exitcodeInternalError
 )
 
 func main() {
+	var (
+		mainErr  error
+		exitCode int
+	)
+
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintf(os.Stderr, "Runtime panic: %v: %s\n", r, debug.Stack())
+			exitCode = exitcodeInternalError
+		}
+		if mainErr != nil {
+			fmt.Fprintf(os.Stderr, "Error 111: %v\n", mainErr)
+		}
+		os.Exit(exitCode)
+	}()
+
 	var (
 		in      = flag.String("in", "", "file to parse instead of stdin")
 		out     = flag.String("out", "", "file to save output to instead of stdout")
@@ -59,16 +77,23 @@ func main() {
 	}
 	typeSets, err := parse.TypeSet(setsArg)
 	if err != nil {
-		fatal(exitcodeInvalidTypeSet, err)
+		exitCode, mainErr = exitcodeInvalidTypeSet, err
+		return
 	}
 
 	var outWriter io.Writer
 	if len(*out) > 0 {
 		outFile, err := os.Create(*out)
 		if err != nil {
-			fatal(exitcodeDestFileFailed, err)
+			exitCode, mainErr = exitcodeDestFileFailed, err
+			return
 		}
-		defer outFile.Close()
+		defer func(outPath string) {
+			outFile.Close()
+			if mainErr != nil {
+				os.RemoveAll(outPath)
+			}
+		}(*out)
 		outWriter = outFile
 	} else {
 		outWriter = os.Stdout
@@ -82,11 +107,13 @@ func main() {
 		}
 		r, err := http.Get(prefix + args[1])
 		if err != nil {
-			fatal(exitcodeGetFailed, err)
+			exitCode, mainErr = exitcodeGetFailed, err
+			return
 		}
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			fatal(exitcodeGetFailed, err)
+			exitCode, mainErr = exitcodeGetFailed, err
+			return
 		}
 		r.Body.Close()
 		br := bytes.NewReader(b)
@@ -95,7 +122,8 @@ func main() {
 		var file *os.File
 		file, err = os.Open(*in)
 		if err != nil {
-			fatal(exitcodeSourceFileInvalid, err)
+			exitCode = exitcodeSourceFileInvalid
+			return
 		}
 		defer file.Close()
 		err = gen(*in, *pkgName, file, typeSets, outWriter)
@@ -103,7 +131,8 @@ func main() {
 		var source []byte
 		source, err = ioutil.ReadAll(os.Stdin)
 		if err != nil {
-			fatal(exitcodeStdinFailed, err)
+			exitCode = exitcodeStdinFailed
+			return
 		}
 		reader := bytes.NewReader(source)
 		err = gen("stdin", *pkgName, reader, typeSets, outWriter)
@@ -111,9 +140,8 @@ func main() {
 
 	// do the work
 	if err != nil {
-		fatal(exitcodeGenFailed, err)
+		exitCode, mainErr = exitcodeGenFailed, err
 	}
-
 }
 
 func usage() {
@@ -134,11 +162,6 @@ Examples:
 
 Flags:`)
 	flag.PrintDefaults()
-}
-
-func fatal(code int, a ...interface{}) {
-	fmt.Println(a...)
-	os.Exit(code)
 }
 
 // gen performs the generic generation.
