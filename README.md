@@ -2,7 +2,7 @@
 
 Fork from [github.com/cheekybits/genny](https://github.com/cheekybits/genny)
 
-Install:
+## Install:
 
 ```
 go get github.com/avoronkov/genny
@@ -22,6 +22,8 @@ Until the Go core team include support for [generics in Go](http://golang.org/do
   * Multiple specific types will generate every permutation
   * Use `BUILTINS` and `NUMBERS` wildtype to generate specific code for all built-in (and number) Go types
   * Function names and comments also get updated
+  * __New:__ user-defined types can be specified for generic types (see [examples/user-defined-types](https://github.com/avoronkov/genny/tree/master/examples/user-defined-types)).
+  * __New:__ you can specify that generic type should implement some interfaces (see [examples/interfaces](https://github.com/avoronkov/genny/tree/master/examples/interfaces)).
 
 ## Library
 
@@ -45,11 +47,17 @@ Examples:
   Generic=Specific
   Generic1=Specific1 Generic2=Specific2
   Generic1=Specific1,Specific2 Generic2=Specific3,Specific4
+  Generic=SpecificTitle:package.Type,AnotherSpecific
 
 Flags:
-  -in="": file to parse instead of stdin
-  -out="": file to save output to instead of stdout
-  -pkg="": package name for generated files
+  -imp value
+        spcify import explicitly (can be specified multiple times)
+  -in string
+        file to parse instead of stdin
+  -out string
+        file to save output to instead of stdout
+  -pkg string
+        package name for generated files
 ```
 
   * Comma separated type lists will generate code for each type
