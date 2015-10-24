@@ -4,10 +4,8 @@
 
 package main
 
-import (
-	"github.com/avoronkov/genny/examples/user-defined-types/person"
-	"github.com/avoronkov/genny/examples/user-defined-types/pet"
-)
+import "github.com/avoronkov/genny/examples/user-defined-types/person"
+import "github.com/avoronkov/genny/examples/user-defined-types/pet"
 
 type PairPersonDog struct {
 	First  person.Person

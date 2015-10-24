@@ -7,7 +7,7 @@ import (
 	"github.com/avoronkov/genny/examples/user-defined-types/pet"
 )
 
-//go:generate genny -pkg=main -in=pair/pair.go -out=gen-$GOFILE gen "FirstType=Person:person.Person SecondType=Dog:pet.Dog"
+//go:generate genny -pkg=main -in=pair/pair.go -out=gen-$GOFILE -imp "github.com/avoronkov/genny/examples/user-defined-types/person" -imp "github.com/avoronkov/genny/examples/user-defined-types/pet" gen "FirstType=Person:person.Person SecondType=Dog:pet.Dog"
 
 func main() {
 	p := PairPersonDog{

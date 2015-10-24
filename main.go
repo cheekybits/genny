@@ -56,7 +56,8 @@ func main() {
 		imports Strings
 		prefix  = "https://github.com/metabition/gennylib/raw/master/"
 	)
-	flag.Var(&imports, "imp", "spcify imports explicitly")
+	flag.Var(&imports, "imp", "spcify import explicitly (can be specified multiple times)")
+	flag.Usage = usage
 	flag.Parse()
 	args := flag.Args()
 
@@ -117,7 +118,7 @@ func main() {
 		}
 		r.Body.Close()
 		br := bytes.NewReader(b)
-		err = gen(*in, *pkgName, br, typeSets, outWriter)
+		err = gen(*in, *pkgName, br, typeSets, imports, outWriter)
 	} else if len(*in) > 0 {
 		var file *os.File
 		file, err = os.Open(*in)
@@ -126,7 +127,7 @@ func main() {
 			return
 		}
 		defer file.Close()
-		err = gen(*in, *pkgName, file, typeSets, outWriter)
+		err = gen(*in, *pkgName, file, typeSets, imports, outWriter)
 	} else {
 		var source []byte
 		source, err = ioutil.ReadAll(os.Stdin)
@@ -135,7 +136,7 @@ func main() {
 			return
 		}
 		reader := bytes.NewReader(source)
-		err = gen("stdin", *pkgName, reader, typeSets, outWriter)
+		err = gen("stdin", *pkgName, reader, typeSets, imports, outWriter)
 	}
 
 	// do the work
@@ -165,12 +166,12 @@ Flags:`)
 }
 
 // gen performs the generic generation.
-func gen(filename, pkgName string, in io.ReadSeeker, typesets []map[string]string, out io.Writer) error {
+func gen(filename, pkgName string, in io.ReadSeeker, typesets []map[string]string, imports []string, out io.Writer) error {
 
 	var output []byte
 	var err error
 
-	output, err = parse.Generics(filename, pkgName, in, typesets)
+	output, err = parse.Generics(filename, pkgName, in, typesets, imports)
 	if err != nil {
 		return err
 	}

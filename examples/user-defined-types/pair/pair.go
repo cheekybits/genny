@@ -1,7 +1,7 @@
 package pair
 
 import (
-	"github.com/cheekybits/genny/generic"
+	"github.com/avoronkov/genny/generic"
 )
 
 type FirstType generic.Type

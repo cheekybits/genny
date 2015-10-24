@@ -177,8 +177,7 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 
 // Generics parses the source file and generates the bytes replacing the
 // generic types for the keys map with the specific types (its value).
-func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]string) ([]byte, error) {
-
+func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]string, importPaths []string) ([]byte, error) {
 	totalOutput := header
 
 	for _, typeSet := range typeSets {
@@ -246,6 +245,9 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 	if pkgName != "" {
 		output = changePackage(bytes.NewReader([]byte(output)), pkgName)
 	}
+	if len(importPaths) > 0 {
+		output = addImports(bytes.NewReader(output), importPaths)
+	}
 	// fix the imports
 	output, err = imports.Process(filename, output, nil)
 	if err != nil {
@@ -302,6 +304,28 @@ func changePackage(r io.Reader, pkgName string) []byte {
 			parts[1] = pkgName
 			s = strings.Join(parts, " ")
 			done = true
+		}
+
+		fmt.Fprintln(&out, s)
+	}
+	return out.Bytes()
+}
+
+func addImports(r io.Reader, importPaths []string) []byte {
+	var out bytes.Buffer
+	sc := bufio.NewScanner(r)
+	done := false
+
+	for sc.Scan() {
+		s := sc.Text()
+
+		if !done && strings.HasPrefix(s, "package") {
+			fmt.Fprintln(&out, s)
+			for _, imp := range importPaths {
+				fmt.Fprintf(&out, "import \"%s\"\n", imp)
+			}
+			done = true
+			continue
 		}
 
 		fmt.Fprintln(&out, s)
