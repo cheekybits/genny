@@ -1,16 +1,17 @@
 # genny - Generics for Go
 
-[![Build Status](https://travis-ci.org/cheekybits/genny.svg?branch=master)](https://travis-ci.org/cheekybits/genny) [![GoDoc](https://godoc.org/github.com/cheekybits/genny/parse?status.png)](http://godoc.org/github.com/cheekybits/genny/parse)
+Fork from [github.com/cheekybits/genny](https://github.com/cheekybits/genny)
 
 Install:
 
 ```
-go get github.com/cheekybits/genny
+go get github.com/avoronkov/genny
 ```
 
 =====
 
 (pron. Jenny) by Mat Ryer ([@matryer](https://twitter.com/matryer)) and Tyler Bunnell ([@TylerJBunnell](https://twitter.com/TylerJBunnell)).
+Forked and modified by Alxr Voronkov.
 
 Until the Go core team include support for [generics in Go](http://golang.org/doc/faq#generics), `genny` is a code-generation generics solution. It allows you write normal buildable and testable Go code which, when processed by the `genny gen` tool, will replace the generics with specific types.
 
@@ -76,7 +77,7 @@ Now, running `go generate` (in a shell) for the package will cause the generic v
   * Use `$GOFILE` to refer to the current file
   * The `//go:generate` line will be removed from the output
 
-To see a real example of how to use `genny` with `go generate`, look in the [example/go-generate directory](https://github.com/cheekybits/genny/tree/master/examples/go-generate).
+To see a real example of how to use `genny` with `go generate`, look in the [example/go-generate directory](https://github.com/avoronkov/genny/tree/master/examples/go-generate).
 
 ## How it works
 
@@ -112,12 +113,12 @@ The output will be the complete Go source file with the generic types replaced w
 
 ## Real example
 
-Given [this generic Go code](https://github.com/cheekybits/genny/tree/master/examples/queue) which compiles and is tested:
+Given [this generic Go code](https://github.com/avoronkov/genny/tree/master/examples/queue) which compiles and is tested:
 
 ```
 package queue
 
-import "github.com/cheekybits/genny/generic"
+import "github.com/avoronkov/genny/generic"
 
 // NOTE: this is how easy it is to define a generic type
 type Something generic.Type
@@ -181,7 +182,7 @@ cat source.go | genny gen "Something=BUILTINS,*MyType"
 
 #### More examples
 
-Check out the [test code files](https://github.com/cheekybits/genny/tree/master/parse/test) for more real examples.
+Check out the [test code files](https://github.com/avoronkov/genny/tree/master/parse/test) for more real examples.
 
 ## Writing test code
 
