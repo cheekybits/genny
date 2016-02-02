@@ -243,6 +243,7 @@ func isAlphaNumeric(r rune) bool {
 func wordify(s string, exported bool) string {
 	s = strings.TrimRight(s, "{}")
 	s = strings.TrimLeft(s, "*&")
+	s = strings.Replace(s, ".", "", -1)
 	if !exported {
 		return s
 	}

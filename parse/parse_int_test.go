@@ -26,6 +26,8 @@ func TestWordify(t *testing.T) {
 		"*MyType":     "MyType",
 		"*myType":     "MyType",
 		"interface{}": "Interface",
+		"pack.type":   "Packtype",
+		"*pack.type":  "Packtype",
 	} {
 		assert.Equal(t, wordified, wordify(word, true))
 	}
