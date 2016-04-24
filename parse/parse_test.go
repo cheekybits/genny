@@ -93,6 +93,13 @@ var tests = []struct {
 		expectedOut: `test/buildtags/buildtags_expected.go`,
 		tag:         "genny",
 	},
+	{
+		filename:    "buildtags.go",
+		in:          `test/buildtags/buildtags.go`,
+		types:       []map[string]string{{"_t_": "string"}},
+		expectedOut: `test/buildtags/buildtags_expected_nostrip.go`,
+		tag:         "",
+	},
 }
 
 func TestParse(t *testing.T) {
