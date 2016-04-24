@@ -151,7 +151,10 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 
 // Generics parses the source file and generates the bytes replacing the
 // generic types for the keys map with the specific types (its value).
-func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]string) ([]byte, error) {
+func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]string, stripTag string) ([]byte, error) {
+	if stripTag != "" {
+		unwantedLinePrefixes = append(unwantedLinePrefixes, []byte(fmt.Sprintf("// +build %s", stripTag)))
+	}
 
 	totalOutput := header
 

@@ -49,6 +49,7 @@ Flags:
   -in="": file to parse instead of stdin
   -out="": file to save output to instead of stdout
   -pkg="": package name for generated files
+  -tag="": bulid tag that is stripped from output
 ```
 
   * Comma separated type lists will generate code for each type
@@ -57,6 +58,8 @@ Flags:
 
   * `-in` - specify the input file (rather than using stdin)
   * `-out` - specify the output file (rather than using stdout)
+  * `-pkg` - rename the package of the generated file (rather than use the package of the template)
+  * `-tag` - if a `// +build` directive is encountered in the template matching this tag do not include it in the output
 
 ### go generate
 

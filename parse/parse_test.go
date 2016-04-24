@@ -15,6 +15,7 @@ var tests = []struct {
 	filename string
 	pkgName  string
 	in       string
+	tag      string
 	types    []map[string]string
 
 	// expectations
@@ -85,6 +86,13 @@ var tests = []struct {
 		types:       []map[string]string{{"Node": "int"}},
 		expectedOut: `test/bugreports/int_digraph.go`,
 	},
+	{
+		filename:    "buildtags.go",
+		in:          `test/buildtags/buildtags.go`,
+		types:       []map[string]string{{"_t_": "int"}},
+		expectedOut: `test/buildtags/buildtags_expected.go`,
+		tag:         "genny",
+	},
 }
 
 func TestParse(t *testing.T) {
@@ -94,7 +102,7 @@ func TestParse(t *testing.T) {
 		test.in = contents(test.in)
 		test.expectedOut = contents(test.expectedOut)
 
-		bytes, err := parse.Generics(test.filename, test.pkgName, strings.NewReader(test.in), test.types)
+		bytes, err := parse.Generics(test.filename, test.pkgName, strings.NewReader(test.in), test.types, test.tag)
 
 		// check the error
 		if test.expectedErr == nil {
