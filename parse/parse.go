@@ -153,6 +153,7 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 // generic types for the keys map with the specific types (its value).
 func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]string) ([]byte, error) {
 
+	foundImports := false
 	totalOutput := header
 
 	for _, typeSet := range typeSets {
@@ -176,9 +177,15 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 
 		// end of imports block?
 		if insideImportBlock {
+			if !foundImports {
+				cleanOutputLines = append(cleanOutputLines, line(scanner.Text()))
+			}
+
 			if bytes.HasSuffix(scanner.Bytes(), closeBrace) {
 				insideImportBlock = false
+				foundImports = true
 			}
+
 			continue
 		}
 
@@ -191,6 +198,10 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 		} else if bytes.HasPrefix(scanner.Bytes(), importKeyword) {
 			if bytes.HasSuffix(scanner.Bytes(), openBrace) {
 				insideImportBlock = true
+			}
+
+			if !foundImports {
+				cleanOutputLines = append(cleanOutputLines, line(scanner.Text()))
 			}
 			continue
 		}
@@ -220,6 +231,7 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 	if pkgName != "" {
 		output = changePackage(bytes.NewReader([]byte(output)), pkgName)
 	}
+
 	// fix the imports
 	output, err = imports.Process(filename, output, nil)
 	if err != nil {
