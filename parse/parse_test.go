@@ -85,6 +85,12 @@ var tests = []struct {
 		types:       []map[string]string{{"Node": "int"}},
 		expectedOut: `test/bugreports/int_digraph.go`,
 	},
+	{
+		filename:    "renamed_pkg.go",
+		in:          `test/renamed/renamed_pkg.go`,
+		types:       []map[string]string{{"_t_": "int"}},
+		expectedOut: `test/renamed/renamed_pkg_int.go`,
+	},
 }
 
 func TestParse(t *testing.T) {
