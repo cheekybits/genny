@@ -25,6 +25,10 @@ var header = []byte(`
 
 `)
 
+var importBlock = `import (
+	%s
+)`
+
 var (
 	packageKeyword = []byte("package")
 	importKeyword  = []byte("import")
@@ -153,8 +157,9 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 // generic types for the keys map with the specific types (its value).
 func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]string) ([]byte, error) {
 
-	foundImports := false
-	totalOutput := header
+	packageLine := ""
+	collectedImports := []string{}
+	totalOutput := []byte{}
 
 	for _, typeSet := range typeSets {
 
@@ -165,7 +170,6 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 		}
 
 		totalOutput = append(totalOutput, parsed...)
-
 	}
 
 	// clean up the code line by line
@@ -177,13 +181,10 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 
 		// end of imports block?
 		if insideImportBlock {
-			if !foundImports {
-				cleanOutputLines = append(cleanOutputLines, line(scanner.Text()))
-			}
-
 			if bytes.HasSuffix(scanner.Bytes(), closeBrace) {
 				insideImportBlock = false
-				foundImports = true
+			} else {
+				collectedImports = append(collectedImports, line(scanner.Text()))
 			}
 
 			continue
@@ -194,15 +195,18 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 				continue
 			} else {
 				packageFound = true
+				packageLine = line(scanner.Text())
+				continue
 			}
 		} else if bytes.HasPrefix(scanner.Bytes(), importKeyword) {
 			if bytes.HasSuffix(scanner.Bytes(), openBrace) {
 				insideImportBlock = true
+			} else {
+				importLine := strings.TrimSpace(line(scanner.Text()))
+				importLine = importLine[6:]
+				collectedImports = append(collectedImports, importLine)
 			}
 
-			if !foundImports {
-				cleanOutputLines = append(cleanOutputLines, line(scanner.Text()))
-			}
 			continue
 		}
 
@@ -221,6 +225,12 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 
 		cleanOutputLines = append(cleanOutputLines, line(scanner.Text()))
 	}
+
+	cleanOutputLines = append([]string{
+		string(header),
+		packageLine,
+		fmt.Sprintf(importBlock, strings.Join(collectedImports, "\n")),
+	}, cleanOutputLines...)
 
 	cleanOutput := strings.Join(cleanOutputLines, "")
 
