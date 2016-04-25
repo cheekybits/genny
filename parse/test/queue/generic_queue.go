@@ -1,6 +1,6 @@
 package queue
 
-import "github.com/cheekybits/genny/generic"
+import "github.com/falun/genny/generic"
 
 // Something is a type that does something
 type Something generic.Type

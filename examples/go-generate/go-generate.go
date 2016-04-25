@@ -1,6 +1,6 @@
 package gogenerate
 
-import "github.com/cheekybits/genny/generic"
+import "github.com/falun/genny/generic"
 
 //go:generate genny -in=$GOFILE -out=gen-$GOFILE gen "KeyType=string,int ValueType=string,int"
 

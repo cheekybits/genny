@@ -3,7 +3,7 @@ package buildtags
 import (
 	"fmt"
 
-	"github.com/cheekybits/genny/generic"
+	"github.com/falun/genny/generic"
 )
 
 // +build x,y z

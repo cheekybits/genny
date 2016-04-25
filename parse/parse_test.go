@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cheekybits/genny/parse"
+	"github.com/falun/genny/parse"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,7 +33,7 @@ var tests = []struct {
 		pkgName:     "changed",
 		in:          `test/queue/generic_queue.go`,
 		types:       []map[string]string{{"Something": "int"}},
-		expectedOut: `test/queue/int_queue_newpkg.go`,
+		expectedOut: `test/queue/changed/int_queue_newpkg.go`,
 	},
 	{
 		filename:    "generic_queue.go",
