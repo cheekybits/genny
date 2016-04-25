@@ -211,7 +211,7 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 				insideImportBlock = true
 			} else {
 				importLine := strings.TrimSpace(line(scanner.Text()))
-				importLine = importLine[6:]
+				importLine = line(importLine[6:])
 				collectedImports = append(collectedImports, importLine)
 			}
 
@@ -237,7 +237,7 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 	cleanOutputLines = append([]string{
 		string(header),
 		packageLine,
-		fmt.Sprintf(importBlock, strings.Join(collectedImports, "\n")),
+		fmt.Sprintf(importBlock, strings.Join(collectedImports, "")),
 	}, cleanOutputLines...)
 
 	cleanOutput := strings.Join(cleanOutputLines, "")
