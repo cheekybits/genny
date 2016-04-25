@@ -1,10 +1,7 @@
 package multipletypesets
 
-import (
-	"log"
-
-	"github.com/cheekybits/genny/generic"
-)
+import "log"
+import "github.com/cheekybits/genny/generic"
 
 type KeyType generic.Type
 type ValueType generic.Type
