@@ -32,7 +32,7 @@ var tests = []struct {
 		pkgName:     "changed",
 		in:          `test/queue/generic_queue.go`,
 		types:       []map[string]string{{"Something": "int"}},
-		expectedOut: `test/queue/int_queue_newpkg.go`,
+		expectedOut: `test/queue/changed/int_queue.go`,
 	},
 	{
 		filename:    "generic_queue.go",
