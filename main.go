@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/cheekybits/genny/parse"
@@ -62,6 +63,11 @@ func main() {
 
 	var outWriter io.Writer
 	if len(*out) > 0 {
+		err := os.MkdirAll(path.Dir(*out), 0755)
+		if err != nil {
+			fatal(exitcodeDestFileFailed, err)
+		}
+
 		outFile, err := os.Create(*out)
 		if err != nil {
 			fatal(exitcodeDestFileFailed, err)
