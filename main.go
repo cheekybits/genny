@@ -67,8 +67,6 @@ func main() {
 		fatal(exitcodeGetFailed, err)
 	}
 
-	fmt.Println("Ins?", ins)
-
 	for i := range ins {
 		if err = process(ins[i], outs[i], *pkgName, prefix, args, typeSets); err != nil {
 			fatal(exitcodeGenFailed, err)
@@ -133,14 +131,12 @@ func process(in, out, pkgName, prefix string, args []string, typeSets []map[stri
 }
 
 func getPaths(in, out string) (ins, outs []string, err error) {
-	fmt.Println("Is single?", isSingle(in))
 	if isSingle(in) && isSingle(out) {
 		ins = append(ins, in)
 		outs = append(outs, out)
 		return
 	}
 
-	fmt.Println("Getting paths", path.Base(in))
 	if path.Base(in) != "*" {
 		ins = strings.Split(in, ",")
 		outs = strings.Split(out, ",")
