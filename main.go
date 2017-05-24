@@ -9,10 +9,11 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/cheekybits/genny/parse"
-	"path/filepath"
+	"github.com/itsmontoya/gocat"
 )
 
 /*
@@ -62,20 +63,19 @@ func main() {
 		fatal(exitcodeInvalidTypeSet, err)
 	}
 
-	var ins, outs []string
-	if ins, outs, err = getPaths(*in, *out); err != nil {
+	var ins []string
+	if ins, err = getIns(*in); err != nil {
 		fatal(exitcodeGetFailed, err)
 	}
 
-	for i := range ins {
-		if err = process(ins[i], outs[i], *pkgName, prefix, args, typeSets); err != nil {
-			fatal(exitcodeGenFailed, err)
-		}
+	if err = process(ins, *out, *pkgName, prefix, args, typeSets); err != nil {
+		fatal(exitcodeGenFailed, err)
 	}
 }
 
-func process(in, out, pkgName, prefix string, args []string, typeSets []map[string]string) (err error) {
+func process(ins []string, out, pkgName, prefix string, args []string, typeSets []map[string]string) (err error) {
 	var outWriter io.Writer
+
 	if len(out) > 0 {
 		err := os.MkdirAll(path.Dir(out), 0755)
 		if err != nil {
@@ -108,83 +108,116 @@ func process(in, out, pkgName, prefix string, args []string, typeSets []map[stri
 		}
 		r.Body.Close()
 		br := bytes.NewReader(b)
-		err = gen(in, pkgName, br, typeSets, outWriter)
-	} else if len(in) > 0 {
-		var file *os.File
-		file, err = os.Open(in)
-		if err != nil {
-			fatal(exitcodeSourceFileInvalid, err)
+		return gen(ins[0], pkgName, br, typeSets, outWriter)
+	}
+
+	switch len(ins) {
+	case 0:
+		fatal(exitcodeSourceFileInvalid)
+
+	case 1:
+		in := ins[0]
+		if len(in) > 0 {
+			var file *os.File
+			file, err = os.Open(in)
+			if err != nil {
+				fatal(exitcodeSourceFileInvalid, err)
+			}
+			defer file.Close()
+			err = gen(in, pkgName, file, typeSets, outWriter)
+		} else {
+			var source []byte
+			source, err = ioutil.ReadAll(os.Stdin)
+			if err != nil {
+				fatal(exitcodeStdinFailed, err)
+			}
+			reader := bytes.NewReader(source)
+			err = gen("stdin", pkgName, reader, typeSets, outWriter)
 		}
-		defer file.Close()
-		err = gen(in, pkgName, file, typeSets, outWriter)
-	} else {
-		var source []byte
-		source, err = ioutil.ReadAll(os.Stdin)
-		if err != nil {
-			fatal(exitcodeStdinFailed, err)
+
+	default:
+		in := bytes.NewBuffer(nil)
+		if err = gocat.Cat(in, pkgName, "", ins, true, true, false); err != nil {
+			fatal(exitcodeSourceFileInvalid)
 		}
-		reader := bytes.NewReader(source)
-		err = gen("stdin", pkgName, reader, typeSets, outWriter)
+
+		err = gen("", pkgName, bytes.NewReader(in.Bytes()), typeSets, outWriter)
 	}
 
 	return
 }
 
-func getPaths(in, out string) (ins, outs []string, err error) {
-	if isSingle(in) && isSingle(out) {
+func getIns(in string) (ins []string, err error) {
+	var ip paths
+	single := isSingle(in)
+	ip.dir = path.Dir(in)
+
+	if in == "" {
+		return
+	}
+
+	if single {
 		ins = append(ins, in)
-		outs = append(outs, out)
 		return
 	}
 
-	if path.Base(in) != "*" {
+	if path.Base(in) != "." {
 		ins = strings.Split(in, ",")
-		outs = strings.Split(out, ",")
-		if len(ins) != len(outs) {
-			err = fmt.Errorf("invalid out length, expected %d items and found %d", len(ins), len(outs))
-			return
-		}
+		return
 	}
 
-	dir := path.Dir(in)
-	odir := path.Dir(out)
-
-	filepath.Walk(path.Dir(in), func(loc string, info os.FileInfo, ierr error) (err error) {
-		// Ignore errors
-		if ierr != nil {
-			return
-		}
-
-		// Ignore dirs
-		if info.IsDir() {
-			return
-		}
-
-		// This file is deeper than our base level, end early
-		if path.Dir(loc) != dir {
-			return
-		}
-
-		// Ignore test files
-		if strings.HasSuffix(loc, "_test.go") {
-			return
-		}
-
-		// Ignore non-go files
-		if !strings.HasSuffix(loc, ".go") {
-			return
-		}
-
-		ins = append(ins, loc)
-		outs = append(outs, path.Join(odir, path.Base(loc)))
+	if err = filepath.Walk(path.Dir(in), ip.Populate); err != nil {
 		return
-	})
+	}
 
+	ins = ip.s
+	return
+}
+
+type paths struct {
+	// File paths
+	s []string
+	// Target dir
+	dir string
+}
+
+// Append will append a path to the slice
+func (p *paths) Append(str string) {
+	p.s = append(p.s, str)
+}
+
+func (p *paths) Populate(loc string, info os.FileInfo, ierr error) (err error) {
+	// Ignore errors
+	if ierr != nil {
+		return
+	}
+
+	// Ignore dirs
+	if info.IsDir() {
+		return
+	}
+
+	// This file is deeper than our base level, end early
+	if path.Dir(loc) != p.dir {
+		return
+	}
+
+	// Ignore test files
+	if strings.HasSuffix(loc, "_test.go") {
+		return
+	}
+
+	// Ignore non-go files
+	if !strings.HasSuffix(loc, ".go") {
+		return
+	}
+
+	p.Append(loc)
 	return
 }
 
 func isSingle(str string) bool {
-	return path.Base(str) != "*" && strings.Index(str, ",") == -1
+	return path.Base(str) != "." && strings.Index(str, ",") == -1
 }
 
 func usage() {
