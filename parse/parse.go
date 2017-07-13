@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"text/scanner"
 	"unicode"
 
 	"golang.org/x/tools/imports"
@@ -80,69 +81,74 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 	in.Seek(0, os.SEEK_SET)
 
 	var buf bytes.Buffer
+	var lineBuf bytes.Buffer
+	var commentBuf bytes.Buffer
 
-	comment := ""
-	scanner := bufio.NewScanner(in)
-	for scanner.Scan() {
+	var s scanner.Scanner
+	s.Init(in)
+	s.Filename = filename
+	s.Mode = scanner.ScanIdents
+	// tokenize all whitespace as well so we can recreate the input stream
+	s.Whitespace = 0
 
-		l := scanner.Text()
+	// scan through all the tokens with special handling for Identifier tokens
+	for tok := s.Scan(); tok != scanner.EOF; tok = s.Scan() {
+		word := s.TokenText()
+		if tok == '\n' {
+			line := lineBuf.String()
+			if strings.Contains(line, genericType) || strings.Contains(line, genericNumber) {
+				commentBuf.Reset()
+				lineBuf.Reset()
+				continue
+			}
+			if strings.HasPrefix(lineBuf.String(), "//") {
+				commentBuf.Write(lineBuf.Bytes())
+				commentBuf.WriteString(word)
+			} else {
+				if commentBuf.Len() > 0 {
+					buf.Write(commentBuf.Bytes())
+					commentBuf.Reset()
+				}
+				buf.Write(lineBuf.Bytes())
+				buf.WriteString(word)
+			}
+			lineBuf.Reset()
+			continue
+		}
 
-		// does this line contain generic.Type?
-		if strings.Contains(l, genericType) || strings.Contains(l, genericNumber) {
-			comment = ""
+		// only process indentifier tokens
+		if tok != scanner.Ident {
+			lineBuf.WriteString(word)
 			continue
 		}
 
 		for t, specificType := range typeSet {
 
 			// does the line contain our type
-			if strings.Contains(l, t) {
+			if strings.Contains(word, t) {
+				i := 0
+				for {
+					i = strings.Index(word[i:], t) // find out where
+					if i > -1 {
 
-				var newLine string
-				// check each word
-				for _, word := range strings.Fields(l) {
-
-					i := 0
-					for {
-						i = strings.Index(word[i:], t) // find out where
-
-						if i > -1 {
-
-							// if this isn't an exact match
-							if i > 0 && isAlphaNumeric(rune(word[i-1])) || i < len(word)-len(t) && isAlphaNumeric(rune(word[i+len(t)])) {
-								// replace the word with a capitolized version
-								word = strings.Replace(word, t, wordify(specificType, unicode.IsUpper(rune(strings.TrimLeft(word, "*&")[0]))), 1)
-							} else {
-								// replace the word as is
-								word = strings.Replace(word, t, specificType, 1)
-							}
-
+						// if this isn't an exact match
+						if i > 0 && isAlphaNumeric(rune(word[i-1])) || i < len(word)-len(t) && isAlphaNumeric(rune(word[i+len(t)])) {
+							// replace the word with a capitolized version
+							word = strings.Replace(word, t, wordify(specificType, unicode.IsUpper(rune(strings.TrimLeft(word, "*&")[0]))), 1)
 						} else {
-							newLine = newLine + word + space
-							break
+							// replace the word as is
+							word = strings.Replace(word, t, specificType, 1)
 						}
-
+					} else {
+						break
 					}
 				}
-				l = newLine
 			}
 		}
-
-		if comment != "" {
-			buf.WriteString(line(comment))
-			comment = ""
-		}
-
-		// is this line a comment?
-		// TODO: should we handle /* */ comments?
-		if strings.HasPrefix(l, "//") {
-			// record this line to print later
-			comment = l
-			continue
-		}
-
-		// write the line
-		buf.WriteString(line(l))
+		lineBuf.WriteString(word)
+	}
+	if lineBuf.Len() > 0 {
+		buf.Write(lineBuf.Bytes())
 	}
 
 	// write it out
