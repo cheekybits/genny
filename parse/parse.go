@@ -82,6 +82,7 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 
 	var buf bytes.Buffer
 	var lineBuf bytes.Buffer
+	var commentBuf bytes.Buffer
 
 	var s scanner.Scanner
 	s.Init(in)
@@ -89,17 +90,30 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 	s.Mode = scanner.ScanIdents
 	// tokenize all whitespace as well so we can recreate the input stream
 	s.Whitespace = 0
+
 	// scan through all the tokens with special handling for Identifier tokens
 	for tok := s.Scan(); tok != scanner.EOF; tok = s.Scan() {
 		word := s.TokenText()
 		if tok == '\n' {
 			line := lineBuf.String()
 			if strings.Contains(line, genericType) || strings.Contains(line, genericNumber) {
+				commentBuf.Reset()
 				lineBuf.Reset()
 				continue
 			}
-			buf.Write(lineBuf.Bytes())
+			if strings.HasPrefix(lineBuf.String(), "//") {
+				commentBuf.Write(lineBuf.Bytes())
+				commentBuf.WriteString(word)
+			} else {
+				if commentBuf.Len() > 0 {
+					buf.Write(commentBuf.Bytes())
+					commentBuf.Reset()
+				}
+				buf.Write(lineBuf.Bytes())
+				buf.WriteString(word)
+			}
 			lineBuf.Reset()
+			continue
 		}
 
 		// only process indentifier tokens
