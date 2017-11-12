@@ -192,7 +192,7 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 			if bytes.HasSuffix(scanner.Bytes(), closeBrace) {
 				insideImportBlock = false
 			} else {
-				collectedImports = append(collectedImports, line(scanner.Text()))
+				collectedImports = append(collectedImports, strings.TrimRight(scanner.Text(), linefeed))
 			}
 
 			continue
@@ -210,8 +210,8 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 			if bytes.HasSuffix(scanner.Bytes(), openBrace) {
 				insideImportBlock = true
 			} else {
-				importLine := strings.TrimSpace(line(scanner.Text()))
-				importLine = importLine[6:]
+				importLine := strings.TrimSpace(scanner.Text())
+				importLine = strings.TrimSpace(importLine[6:])
 				collectedImports = append(collectedImports, importLine)
 			}
 
