@@ -11,7 +11,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/cheekybits/genny/parse"
+	"github.com/moriyoshi/genny/parse"
 )
 
 /*
