@@ -85,11 +85,17 @@ var tests = []struct {
 		types:       []map[string]string{{"Node": "int"}},
 		expectedOut: `test/bugreports/int_digraph.go`,
 	},
+	{
+		filename:    "renamed_pkg.go",
+		in:          `test/renamed/renamed_pkg.go`,
+		types:       []map[string]string{{"_t_": "int"}},
+		expectedOut: `test/renamed/renamed_pkg_int.go`,
+	},
 }
 
 func TestParse(t *testing.T) {
 
-	for _, test := range tests {
+	for testNo, test := range tests {
 
 		test.in = contents(test.in)
 		test.expectedOut = contents(test.expectedOut)
@@ -98,10 +104,10 @@ func TestParse(t *testing.T) {
 
 		// check the error
 		if test.expectedErr == nil {
-			assert.NoError(t, err, "(%s) No error was expected but got: %s", test.filename, err)
+			assert.NoError(t, err, "(%d: %s) No error was expected but got: %s", testNo, test.filename, err)
 		} else {
-			assert.NotNil(t, err, "(%s) No error was returned by one was expected: %s", test.filename, test.expectedErr)
-			assert.IsType(t, test.expectedErr, err, "(%s) Generate should return object of type %v", test.filename, test.expectedErr)
+			assert.NotNil(t, err, "(%d: %s) No error was returned by one was expected: %s", testNo, test.filename, test.expectedErr)
+			assert.IsType(t, test.expectedErr, err, "(%d: %s) Generate should return object of type %v", testNo, test.filename, test.expectedErr)
 		}
 
 		// assert the response
