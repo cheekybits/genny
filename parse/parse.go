@@ -25,10 +25,6 @@ var header = []byte(`
 
 `)
 
-var importBlock = `import (
-	%s
-)`
-
 var (
 	packageKeyword = []byte("package")
 	importKeyword  = []byte("import")
@@ -166,7 +162,7 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 	}
 
 	packageLine := ""
-	collectedImports := []string{}
+	collectedImports := map[string]bool{}
 	totalOutput := []byte{}
 
 	for _, typeSet := range typeSets {
@@ -183,7 +179,7 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 	// clean up the code line by line
 	packageFound := false
 	insideImportBlock := false
-	var cleanOutputLines []string
+	outputLines := []string{}
 	scanner := bufio.NewScanner(bytes.NewReader(totalOutput))
 	for scanner.Scan() {
 
@@ -192,7 +188,7 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 			if bytes.HasSuffix(scanner.Bytes(), closeBrace) {
 				insideImportBlock = false
 			} else {
-				collectedImports = append(collectedImports, strings.TrimRight(scanner.Text(), linefeed))
+				collectedImports[strings.TrimRight(scanner.Text(), linefeed)] = true
 			}
 
 			continue
@@ -212,7 +208,7 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 			} else {
 				importLine := strings.TrimSpace(scanner.Text())
 				importLine = strings.TrimSpace(importLine[6:])
-				collectedImports = append(collectedImports, importLine)
+				collectedImports[importLine] = true
 			}
 
 			continue
@@ -231,14 +227,20 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 			continue
 		}
 
-		cleanOutputLines = append(cleanOutputLines, line(scanner.Text()))
+		outputLines = append(outputLines, line(scanner.Text()))
 	}
 
-	cleanOutputLines = append([]string{
+	cleanOutputLines := []string{
 		string(header),
 		packageLine,
-		fmt.Sprintf(importBlock, strings.Join(collectedImports, "\n")),
-	}, cleanOutputLines...)
+		fmt.Sprintln("import ("),
+	}
+	for importLine, _ := range collectedImports {
+		cleanOutputLines = append(cleanOutputLines, fmt.Sprintln(importLine))
+	}
+	cleanOutputLines = append(cleanOutputLines, fmt.Sprintln(")"))
+
+	cleanOutputLines = append(cleanOutputLines, outputLines...)
 
 	cleanOutput := strings.Join(cleanOutputLines, "")
 

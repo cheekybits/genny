@@ -4,7 +4,9 @@
 
 package buildtags
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // +build x,y z
 

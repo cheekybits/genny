@@ -4,7 +4,9 @@
 
 package unexported
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func myTypeInspect(s *myType) string {
 	return fmt.Sprintf("%#v", s)
