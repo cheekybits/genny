@@ -183,7 +183,7 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 	// clean up the code line by line
 	packageFound := false
 	insideImportBlock := false
-	var cleanOutputLines []string
+	var outputLines []string
 	scanner := bufio.NewScanner(bytes.NewReader(totalOutput))
 	for scanner.Scan() {
 
@@ -211,7 +211,7 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 				insideImportBlock = true
 			} else {
 				importLine := strings.TrimSpace(line(scanner.Text()))
-				importLine = line(importLine[6:])
+				importLine = strings.TrimSpace(importLine[6:])
 				collectedImports = collectedImports.append(importLine)
 			}
 
@@ -231,14 +231,20 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 			continue
 		}
 
-		cleanOutputLines = append(cleanOutputLines, line(scanner.Text()))
+		outputLines = append(outputLines, line(scanner.Text()))
 	}
 
-	cleanOutputLines = append([]string{
+	cleanOutputLines := []string{
 		string(header),
 		packageLine,
-		fmt.Sprintf(importBlock, strings.Join(collectedImports, "")),
-	}, cleanOutputLines...)
+		fmt.Sprintln("import ("),
+	}
+	for _, importLine := range collectedImports {
+		cleanOutputLines = append(cleanOutputLines, fmt.Sprintln(importLine))
+	}
+	cleanOutputLines = append(cleanOutputLines, fmt.Sprintln(")"))
+
+	cleanOutputLines = append(cleanOutputLines, outputLines...)
 
 	cleanOutput := strings.Join(cleanOutputLines, "")
 
