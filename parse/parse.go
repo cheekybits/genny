@@ -42,6 +42,7 @@ var (
 )
 var unwantedLinePrefixes = [][]byte{
 	[]byte("//go:generate genny "),
+	[]byte("//go:generate $GOPATH/bin/genny "),
 }
 
 func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]string) ([]byte, error) {
