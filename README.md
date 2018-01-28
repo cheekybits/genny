@@ -1,4 +1,3 @@
-
 # genny - Generics for Go
 
 [![Build Status](https://travis-ci.org/mauricelam/genny.svg?branch=master)](https://travis-ci.org/mauricelam/genny) [![GoDoc](https://godoc.org/github.com/mauricelam/genny/parse?status.png)](http://godoc.org/github.com/mauricelam/genny/parse)
@@ -29,6 +28,8 @@ Until the Go core team include support for [generics in Go](http://golang.org/do
   * Multiple specific types will generate every permutation
   * Use `BUILTINS` and `NUMBERS` wildtype to generate specific code for all built-in (and number) Go types
   * Function names and comments also get updated
+  * __New:__ user-defined types can be specified for generic types (see [examples/user-defined-types](https://github.com/mauricelam/genny/tree/master/examples/user-defined-types)).
+  * __New:__ you can specify that generic type should implement some interfaces (see [examples/interfaces](https://github.com/mauricelam/genny/tree/master/examples/interfaces)).
 
 ## Library
 
@@ -52,18 +53,26 @@ Examples:
   Generic=Specific
   Generic1=Specific1 Generic2=Specific2
   Generic1=Specific1,Specific2 Generic2=Specific3,Specific4
+  Generic=SpecificTitle:package.Type,AnotherSpecific
 
 Flags:
-  -in="": file to parse instead of stdin
-  -out="": file to save output to instead of stdout
-  -pkg="": package name for generated files
-  -tag="": bulid tag that is stripped from output
+  -imp value
+        specify import explicitly (can be specified multiple times)
+  -in string
+        file to parse instead of stdin
+  -out string
+        file to save output to instead of stdout
+  -pkg string
+        package name for generated files
+  -tag string
+        bulid tag that is stripped from output
 ```
 
   * Comma separated type lists will generate code for each type
 
 ### Flags
 
+  * `-imp` - specify import explicitly (can be specified multiple times)
   * `-in` - specify the input file (rather than using stdin)
   * `-out` - specify the output file (rather than using stdout)
   * `-pkg` - rename the package of the generated file (rather than use the package of the template)

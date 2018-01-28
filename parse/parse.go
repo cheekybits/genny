@@ -9,6 +9,7 @@ import (
 	"go/token"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 	"unicode"
 
@@ -88,13 +89,34 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 
 	comment := ""
 	scanner := bufio.NewScanner(in)
+	reInterfaceBegin := regexp.MustCompile(`^\s*type\s+\w+\s+interface\s*\{`)
+	reInterfaceEnd := regexp.MustCompile(`^\s*\}`)
+	var interfaceLines []string
+	interfaceContainsType := false
 	for scanner.Scan() {
 
 		l := scanner.Text()
 
+		if reInterfaceBegin.MatchString(l) {
+			interfaceLines = []string{l}
+		}
+
+		if len(interfaceLines) > 0 && reInterfaceEnd.MatchString(l) {
+			if !interfaceContainsType {
+				for _, li := range append(interfaceLines, l) {
+					buf.WriteString(li)
+				}
+			}
+			interfaceLines, interfaceContainsType = nil, false
+			continue
+		}
+
 		// does this line contain generic.Type?
 		if strings.Contains(l, genericType) || strings.Contains(l, genericNumber) {
 			comment = ""
+			if len(interfaceLines) > 0 {
+				interfaceContainsType = true
+			}
 			continue
 		}
 
@@ -119,7 +141,7 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 								word = strings.Replace(word, t, wordify(specificType, unicode.IsUpper(rune(strings.TrimLeft(word, "*&")[0]))), 1)
 							} else {
 								// replace the word as is
-								word = strings.Replace(word, t, specificType, 1)
+								word = strings.Replace(word, t, typify(specificType), 1)
 							}
 
 						} else {
@@ -147,7 +169,11 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 		}
 
 		// write the line
-		buf.WriteString(line(l))
+		if len(interfaceLines) > 0 {
+			interfaceLines = append(interfaceLines, l)
+		} else {
+			buf.WriteString(line(l))
+		}
 	}
 
 	// write it out
@@ -156,7 +182,7 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 
 // Generics parses the source file and generates the bytes replacing the
 // generic types for the keys map with the specific types (its value).
-func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]string, stripTag string) ([]byte, error) {
+func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]string, importPaths []string, stripTag string) ([]byte, error) {
 	localUnwantedLinePrefixes := [][]byte{}
 	for _, ulp := range unwantedLinePrefixes {
 		localUnwantedLinePrefixes = append(localUnwantedLinePrefixes, ulp)
@@ -256,7 +282,9 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 	if pkgName != "" {
 		output = changePackage(bytes.NewReader([]byte(output)), pkgName)
 	}
-
+	if len(importPaths) > 0 {
+		output = addImports(bytes.NewReader(output), importPaths)
+	}
 	// fix the imports
 	output, err = imports.Process(filename, output, nil)
 	if err != nil {
@@ -277,7 +305,11 @@ func isAlphaNumeric(r rune) bool {
 
 // wordify turns a type into a nice word for function and type
 // names etc.
+// If s matches format `<Title>:<Type>` then <Title> is returned
 func wordify(s string, exported bool) string {
+	if sepIdx := strings.Index(s, ":"); sepIdx >= 0 {
+		return s[:sepIdx]
+	}
 	s = strings.TrimRight(s, "{}")
 	s = strings.TrimLeft(s, "*&")
 	s = strings.Replace(s, ".", "", -1)
@@ -285,6 +317,15 @@ func wordify(s string, exported bool) string {
 		return s
 	}
 	return strings.ToUpper(string(s[0])) + s[1:]
+}
+
+// typify gets type name from string.
+// if string contains ":" then right part is returned otherwise string itself is returned
+func typify(s string) string {
+	if sepIdx := strings.Index(s, ":"); sepIdx >= 0 {
+		return s[sepIdx+1:]
+	}
+	return s
 }
 
 func changePackage(r io.Reader, pkgName string) []byte {
@@ -300,6 +341,28 @@ func changePackage(r io.Reader, pkgName string) []byte {
 			parts[1] = pkgName
 			s = strings.Join(parts, " ")
 			done = true
+		}
+
+		fmt.Fprintln(&out, s)
+	}
+	return out.Bytes()
+}
+
+func addImports(r io.Reader, importPaths []string) []byte {
+	var out bytes.Buffer
+	sc := bufio.NewScanner(r)
+	done := false
+
+	for sc.Scan() {
+		s := sc.Text()
+
+		if !done && strings.HasPrefix(s, "package") {
+			fmt.Fprintln(&out, s)
+			for _, imp := range importPaths {
+				fmt.Fprintf(&out, "import \"%s\"\n", imp)
+			}
+			done = true
+			continue
 		}
 
 		fmt.Fprintln(&out, s)

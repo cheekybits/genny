@@ -17,6 +17,7 @@ var tests = []struct {
 	pkgName  string
 	in       string
 	tag      string
+	imports  []string
 	types    []map[string]string
 
 	// expectations
@@ -117,7 +118,7 @@ func TestParse(t *testing.T) {
 			test.in = contents(test.in)
 			test.expectedOut = contents(test.expectedOut)
 
-			bytes, err := parse.Generics(test.filename, test.pkgName, strings.NewReader(test.in), test.types, test.tag)
+			bytes, err := parse.Generics(test.filename, test.pkgName, strings.NewReader(test.in), test.types, test.imports, test.tag)
 
 			// check the error
 			if test.expectedErr == nil {

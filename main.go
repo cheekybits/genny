@@ -55,9 +55,11 @@ func main() {
 		out     = flag.String("out", "", "file to save output to instead of stdout")
 		pkgName = flag.String("pkg", "", "package name for generated files")
 		genTag  = flag.String("tag", "", "build tag that is stripped from output")
+		imports Strings
 		prefix  = "https://github.com/metabition/gennylib/raw/master/"
 	)
-
+	flag.Var(&imports, "imp", "specify import explicitly (can be specified multiple times)")
+	flag.Usage = usage
 	flag.Parse()
 	args := flag.Args()
 
@@ -123,7 +125,7 @@ func main() {
 		}
 		r.Body.Close()
 		br := bytes.NewReader(b)
-		err = gen(*in, *pkgName, br, typeSets, outWriter, *genTag)
+		err = gen(*in, *pkgName, br, typeSets, imports, outWriter, *genTag)
 	} else if len(*in) > 0 {
 		var file *os.File
 		file, err = os.Open(*in)
@@ -132,7 +134,7 @@ func main() {
 			return
 		}
 		defer file.Close()
-		err = gen(*in, *pkgName, file, typeSets, outWriter, *genTag)
+		err = gen(*in, *pkgName, file, typeSets, imports, outWriter, *genTag)
 	} else {
 		var source []byte
 		source, err = ioutil.ReadAll(os.Stdin)
@@ -141,7 +143,7 @@ func main() {
 			return
 		}
 		reader := bytes.NewReader(source)
-		err = gen("stdin", *pkgName, reader, typeSets, outWriter, *genTag)
+		err = gen("stdin", *pkgName, reader, typeSets, imports, outWriter, *genTag)
 	}
 
 	// do the work
@@ -164,22 +166,35 @@ Examples:
   Generic=Specific
   Generic1=Specific1 Generic2=Specific2
   Generic1=Specific1,Specific2 Generic2=Specific3,Specific4
+  Generic=SpecificTitle:package.Type,AnotherSpecific
 
 Flags:`)
 	flag.PrintDefaults()
 }
 
 // gen performs the generic generation.
-func gen(filename, pkgName string, in io.ReadSeeker, typesets []map[string]string, out io.Writer, tag string) error {
+func gen(filename, pkgName string, in io.ReadSeeker, typesets []map[string]string, imports []string, out io.Writer, tag string) error {
 
 	var output []byte
 	var err error
 
-	output, err = parse.Generics(filename, pkgName, in, typesets, tag)
+	output, err = parse.Generics(filename, pkgName, in, typesets, imports, tag)
 	if err != nil {
 		return err
 	}
 
 	out.Write(output)
+	return nil
+}
+
+// List of strings for flag
+type Strings []string
+
+func (i Strings) String() string {
+	return strings.Join([]string(i), ", ")
+}
+
+func (i *Strings) Set(value string) error {
+	*i = append(*i, value)
 	return nil
 }
