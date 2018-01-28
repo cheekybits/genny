@@ -2,12 +2,16 @@
 // Any changes will be lost if this file is regenerated.
 // see https://github.com/mauricelam/genny
 
-package unexported
+package renamed
 
 import (
 	"fmt"
+
+	testpkg "github.com/mauricelam/genny/parse/test/renamed/subpkg"
 )
 
-func myTypeInspect(s *myType) string {
-	return fmt.Sprintf("%#v", s)
+func someFuncint() {
+	var t int
+	fmt.Println(t)
+	fmt.Println(testpkg.Bar)
 }

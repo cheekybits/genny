@@ -4,7 +4,9 @@
 
 package multipletypesets
 
-import "log"
+import (
+	"log"
+)
 
 type IntStringMap map[int]string
 

@@ -1,3 +1,4 @@
+
 # genny - Generics for Go
 
 [![Build Status](https://travis-ci.org/mauricelam/genny.svg?branch=master)](https://travis-ci.org/mauricelam/genny) [![GoDoc](https://godoc.org/github.com/mauricelam/genny/parse?status.png)](http://godoc.org/github.com/mauricelam/genny/parse)
@@ -5,12 +6,19 @@
 Install:
 
 ```
+go install github.com/mauricelam/genny
+```
+
+Develop:
+```
+go get github.com/stretchr/testify/assert # necessary to run tests
 go get github.com/mauricelam/genny
+go test github.com/mauricelam/genny/...
 ```
 
 =====
 
-(pron. Jenny) by Mat Ryer ([@matryer](https://twitter.com/matryer)) and Tyler Bunnell ([@TylerJBunnell](https://twitter.com/TylerJBunnell)).
+**Forked from:** [cheekybits/genny](https://github.com/cheekybits/genny) (pron. Jenny) by Mat Ryer ([@matryer](https://twitter.com/matryer)) and Tyler Bunnell ([@TylerJBunnell](https://twitter.com/TylerJBunnell)).
 
 Until the Go core team include support for [generics in Go](http://golang.org/doc/faq#generics), `genny` is a code-generation generics solution. It allows you write normal buildable and testable Go code which, when processed by the `genny gen` tool, will replace the generics with specific types.
 
@@ -49,6 +57,7 @@ Flags:
   -in="": file to parse instead of stdin
   -out="": file to save output to instead of stdout
   -pkg="": package name for generated files
+  -tag="": bulid tag that is stripped from output
 ```
 
   * Comma separated type lists will generate code for each type
@@ -57,6 +66,8 @@ Flags:
 
   * `-in` - specify the input file (rather than using stdin)
   * `-out` - specify the output file (rather than using stdout)
+  * `-pkg` - rename the package of the generated file (rather than use the package of the template)
+  * `-tag` - if a `// +build` directive is encountered in the template matching this tag do not include it in the output
 
 ### go generate
 

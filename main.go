@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"runtime/debug"
 	"strings"
 
 	"github.com/mauricelam/genny/parse"
@@ -29,15 +30,34 @@ const (
 	exitcodeGetFailed
 	exitcodeSourceFileInvalid
 	exitcodeDestFileFailed
+	exitcodeInternalError
 )
 
 func main() {
 	var (
+		mainErr  error
+		exitCode int
+	)
+
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintf(os.Stderr, "panic: %v: %s\n", r, debug.Stack())
+			exitCode = exitcodeInternalError
+		}
+		if mainErr != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", mainErr)
+		}
+		os.Exit(exitCode)
+	}()
+
+	var (
 		in      = flag.String("in", "", "file to parse instead of stdin")
 		out     = flag.String("out", "", "file to save output to instead of stdout")
 		pkgName = flag.String("pkg", "", "package name for generated files")
+		genTag  = flag.String("tag", "", "build tag that is stripped from output")
 		prefix  = "https://github.com/metabition/gennylib/raw/master/"
 	)
+
 	flag.Parse()
 	args := flag.Args()
 
@@ -58,21 +78,28 @@ func main() {
 	}
 	typeSets, err := parse.TypeSet(setsArg)
 	if err != nil {
-		fatal(exitcodeInvalidTypeSet, err)
+		exitCode, mainErr = exitcodeInvalidTypeSet, err
+		return
 	}
 
 	var outWriter io.Writer
 	if len(*out) > 0 {
 		err := os.MkdirAll(path.Dir(*out), 0755)
 		if err != nil {
-			fatal(exitcodeDestFileFailed, err)
+			exitCode, mainErr = exitcodeDestFileFailed, err
 		}
 
 		outFile, err := os.Create(*out)
 		if err != nil {
-			fatal(exitcodeDestFileFailed, err)
+			exitCode, mainErr = exitcodeDestFileFailed, err
+			return
 		}
-		defer outFile.Close()
+		defer func(outPath string) {
+			outFile.Close()
+			if mainErr != nil {
+				os.RemoveAll(outPath)
+			}
+		}(*out)
 		outWriter = outFile
 	} else {
 		outWriter = os.Stdout
@@ -86,38 +113,41 @@ func main() {
 		}
 		r, err := http.Get(prefix + args[1])
 		if err != nil {
-			fatal(exitcodeGetFailed, err)
+			exitCode, mainErr = exitcodeGetFailed, err
+			return
 		}
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			fatal(exitcodeGetFailed, err)
+			exitCode, mainErr = exitcodeGetFailed, err
+			return
 		}
 		r.Body.Close()
 		br := bytes.NewReader(b)
-		err = gen(*in, *pkgName, br, typeSets, outWriter)
+		err = gen(*in, *pkgName, br, typeSets, outWriter, *genTag)
 	} else if len(*in) > 0 {
 		var file *os.File
 		file, err = os.Open(*in)
 		if err != nil {
-			fatal(exitcodeSourceFileInvalid, err)
+			exitCode = exitcodeSourceFileInvalid
+			return
 		}
 		defer file.Close()
-		err = gen(*in, *pkgName, file, typeSets, outWriter)
+		err = gen(*in, *pkgName, file, typeSets, outWriter, *genTag)
 	} else {
 		var source []byte
 		source, err = ioutil.ReadAll(os.Stdin)
 		if err != nil {
-			fatal(exitcodeStdinFailed, err)
+			exitCode = exitcodeStdinFailed
+			return
 		}
 		reader := bytes.NewReader(source)
-		err = gen("stdin", *pkgName, reader, typeSets, outWriter)
+		err = gen("stdin", *pkgName, reader, typeSets, outWriter, *genTag)
 	}
 
 	// do the work
 	if err != nil {
-		fatal(exitcodeGenFailed, err)
+		exitCode, mainErr = exitcodeGenFailed, err
 	}
-
 }
 
 func usage() {
@@ -139,18 +169,13 @@ Flags:`)
 	flag.PrintDefaults()
 }
 
-func fatal(code int, a ...interface{}) {
-	fmt.Println(a...)
-	os.Exit(code)
-}
-
 // gen performs the generic generation.
-func gen(filename, pkgName string, in io.ReadSeeker, typesets []map[string]string, out io.Writer) error {
+func gen(filename, pkgName string, in io.ReadSeeker, typesets []map[string]string, out io.Writer, tag string) error {
 
 	var output []byte
 	var err error
 
-	output, err = parse.Generics(filename, pkgName, in, typesets)
+	output, err = parse.Generics(filename, pkgName, in, typesets, tag)
 	if err != nil {
 		return err
 	}
