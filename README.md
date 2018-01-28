@@ -1,16 +1,23 @@
 # genny - Generics for Go
 
-[![Build Status](https://travis-ci.org/cheekybits/genny.svg?branch=master)](https://travis-ci.org/cheekybits/genny) [![GoDoc](https://godoc.org/github.com/cheekybits/genny/parse?status.png)](http://godoc.org/github.com/cheekybits/genny/parse)
+[![Build Status](https://travis-ci.org/mauricelam/genny.svg?branch=master)](https://travis-ci.org/mauricelam/genny) [![GoDoc](https://godoc.org/github.com/mauricelam/genny/parse?status.png)](http://godoc.org/github.com/mauricelam/genny/parse)
 
 Install:
 
 ```
-go get github.com/cheekybits/genny
+go install github.com/mauricelam/genny
+```
+
+Develop:
+```
+go get github.com/stretchr/testify/assert # necessary to run tests
+go get github.com/mauricelam/genny
+go test github.com/mauricelam/genny/...
 ```
 
 =====
 
-(pron. Jenny) by Mat Ryer ([@matryer](https://twitter.com/matryer)) and Tyler Bunnell ([@TylerJBunnell](https://twitter.com/TylerJBunnell)).
+**Forked from:** [cheekybits/genny](https://github.com/cheekybits/genny) (pron. Jenny) by Mat Ryer ([@matryer](https://twitter.com/matryer)) and Tyler Bunnell ([@TylerJBunnell](https://twitter.com/TylerJBunnell)).
 
 Until the Go core team include support for [generics in Go](http://golang.org/doc/faq#generics), `genny` is a code-generation generics solution. It allows you write normal buildable and testable Go code which, when processed by the `genny gen` tool, will replace the generics with specific types.
 
@@ -21,10 +28,12 @@ Until the Go core team include support for [generics in Go](http://golang.org/do
   * Multiple specific types will generate every permutation
   * Use `BUILTINS` and `NUMBERS` wildtype to generate specific code for all built-in (and number) Go types
   * Function names and comments also get updated
+  * __New:__ user-defined types can be specified for generic types (see [examples/user-defined-types](https://github.com/mauricelam/genny/tree/master/examples/user-defined-types)).
+  * __New:__ you can specify that generic type should implement some interfaces (see [examples/interfaces](https://github.com/mauricelam/genny/tree/master/examples/interfaces)).
 
 ## Library
 
-We have started building a [library of common things](https://github.com/cheekybits/gennylib), and you can use `genny get` to generate the specific versions you need.
+We have started building a [library of common things](https://github.com/mauricelam/gennylib), and you can use `genny get` to generate the specific versions you need.
 
 For example: `genny get maps/concurrentmap.go "KeyType=BUILTINS ValueType=BUILTINS"` will print out generated code for all types for a concurrent map. Any file in the library may be generated locally in this way using all the same options given to `genny gen`.
 
@@ -36,7 +45,7 @@ genny [{flags}] gen "{types}"
 gen - generates type specific code from generic code.
 get <package/file> - fetch a generic template from the online library and gen it.
 
-{types}  - (optional) Command line flags (see below)
+{flags}  - (optional) Command line flags (see below)
 {types}  - (required) Specific types for each generic type in the source
 {types} format:  {generic}={specific}[,another][ {generic2}={specific2}]
 
@@ -44,19 +53,30 @@ Examples:
   Generic=Specific
   Generic1=Specific1 Generic2=Specific2
   Generic1=Specific1,Specific2 Generic2=Specific3,Specific4
+  Generic=SpecificTitle:package.Type,AnotherSpecific
 
 Flags:
-  -in="": file to parse instead of stdin
-  -out="": file to save output to instead of stdout
-  -pkg="": package name for generated files
+  -imp value
+        specify import explicitly (can be specified multiple times)
+  -in string
+        file to parse instead of stdin
+  -out string
+        file to save output to instead of stdout
+  -pkg string
+        package name for generated files
+  -tag string
+        bulid tag that is stripped from output
 ```
 
   * Comma separated type lists will generate code for each type
 
 ### Flags
 
+  * `-imp` - specify import explicitly (can be specified multiple times)
   * `-in` - specify the input file (rather than using stdin)
   * `-out` - specify the output file (rather than using stdout)
+  * `-pkg` - rename the package of the generated file (rather than use the package of the template)
+  * `-tag` - if a `// +build` directive is encountered in the template matching this tag do not include it in the output
 
 ### go generate
 
@@ -76,7 +96,7 @@ Now, running `go generate` (in a shell) for the package will cause the generic v
   * Use `$GOFILE` to refer to the current file
   * The `//go:generate` line will be removed from the output
 
-To see a real example of how to use `genny` with `go generate`, look in the [example/go-generate directory](https://github.com/cheekybits/genny/tree/master/examples/go-generate).
+To see a real example of how to use `genny` with `go generate`, look in the [example/go-generate directory](https://github.com/mauricelam/genny/tree/master/examples/go-generate).
 
 ## How it works
 
@@ -112,12 +132,12 @@ The output will be the complete Go source file with the generic types replaced w
 
 ## Real example
 
-Given [this generic Go code](https://github.com/cheekybits/genny/tree/master/examples/queue) which compiles and is tested:
+Given [this generic Go code](https://github.com/mauricelam/genny/tree/master/examples/queue) which compiles and is tested:
 
 ```go
 package queue
 
-import "github.com/cheekybits/genny/generic"
+import "github.com/mauricelam/genny/generic"
 
 // NOTE: this is how easy it is to define a generic type
 type Something generic.Type
@@ -151,7 +171,7 @@ It outputs:
 ```go
 // This file was automatically generated by genny.
 // Any changes will be lost if this file is regenerated.
-// see https://github.com/cheekybits/genny
+// see https://github.com/mauricelam/genny
 
 package queue
 
@@ -181,7 +201,7 @@ cat source.go | genny gen "Something=BUILTINS,*MyType"
 
 #### More examples
 
-Check out the [test code files](https://github.com/cheekybits/genny/tree/master/parse/test) for more real examples.
+Check out the [test code files](https://github.com/mauricelam/genny/tree/master/parse/test) for more real examples.
 
 ## Writing test code
 
@@ -240,6 +260,6 @@ Because `generic.Type` is an empty interface type (literally `interface{}`) ever
 
 ### Contributions
 
-  * See the [API documentation for the parse package](http://godoc.org/github.com/cheekybits/genny/parse)
+  * See the [API documentation for the parse package](http://godoc.org/github.com/mauricelam/genny/parse)
   * Please do TDD
   * All input welcome

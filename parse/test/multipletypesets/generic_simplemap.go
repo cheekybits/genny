@@ -3,7 +3,7 @@ package multipletypesets
 import (
 	"log"
 
-	"github.com/cheekybits/genny/generic"
+	"github.com/mauricelam/genny/generic"
 )
 
 type KeyType generic.Type

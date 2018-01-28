@@ -1,12 +1,13 @@
 package parse_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"strings"
 	"testing"
 
-	"github.com/cheekybits/genny/parse"
+	"github.com/mauricelam/genny/parse"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,6 +16,8 @@ var tests = []struct {
 	filename string
 	pkgName  string
 	in       string
+	tag      string
+	imports  []string
 	types    []map[string]string
 
 	// expectations
@@ -32,7 +35,7 @@ var tests = []struct {
 		pkgName:     "changed",
 		in:          `test/queue/generic_queue.go`,
 		types:       []map[string]string{{"Something": "int"}},
-		expectedOut: `test/queue/changed/int_queue.go`,
+		expectedOut: `test/queue/changed/int_queue_newpkg.go`,
 	},
 	{
 		filename:    "generic_queue.go",
@@ -85,30 +88,52 @@ var tests = []struct {
 		types:       []map[string]string{{"Node": "int"}},
 		expectedOut: `test/bugreports/int_digraph.go`,
 	},
+	{
+		filename:    "renamed_pkg.go",
+		in:          `test/renamed/renamed_pkg.go`,
+		types:       []map[string]string{{"_t_": "int"}},
+		expectedOut: `test/renamed/renamed_pkg_int.go`,
+	},
+	{
+		filename:    "buildtags.go",
+		in:          `test/buildtags/buildtags.go`,
+		types:       []map[string]string{{"_t_": "int"}},
+		expectedOut: `test/buildtags/buildtags_expected.go`,
+		tag:         "genny",
+	},
+	{
+		filename:    "buildtags.go",
+		in:          `test/buildtags/buildtags.go`,
+		types:       []map[string]string{{"_t_": "string"}},
+		expectedOut: `test/buildtags/buildtags_expected_nostrip.go`,
+		tag:         "",
+	},
 }
 
 func TestParse(t *testing.T) {
 
-	for _, test := range tests {
+	for testNo, test := range tests {
 
-		test.in = contents(test.in)
-		test.expectedOut = contents(test.expectedOut)
+		t.Run(fmt.Sprintf("%d:%s", testNo, test.expectedOut), func(t *testing.T) {
+			test.in = contents(test.in)
+			test.expectedOut = contents(test.expectedOut)
 
-		bytes, err := parse.Generics(test.filename, test.pkgName, strings.NewReader(test.in), test.types)
+			bytes, err := parse.Generics(test.filename, test.pkgName, strings.NewReader(test.in), test.types, test.imports, test.tag)
 
-		// check the error
-		if test.expectedErr == nil {
-			assert.NoError(t, err, "(%s) No error was expected but got: %s", test.filename, err)
-		} else {
-			assert.NotNil(t, err, "(%s) No error was returned by one was expected: %s", test.filename, test.expectedErr)
-			assert.IsType(t, test.expectedErr, err, "(%s) Generate should return object of type %v", test.filename, test.expectedErr)
-		}
+			// check the error
+			if test.expectedErr == nil {
+				assert.NoError(t, err, "(%d: %s) No error was expected but got: %s", testNo, test.filename, err)
+			} else {
+				assert.NotNil(t, err, "(%d: %s) No error was returned by one was expected: %s", testNo, test.filename, test.expectedErr)
+				assert.IsType(t, test.expectedErr, err, "(%d: %s) Generate should return object of type %v", testNo, test.filename, test.expectedErr)
+			}
 
-		// assert the response
-		if !assert.Equal(t, string(bytes), test.expectedOut, "Parse didn't generate the expected output.") {
-			log.Println("EXPECTED: " + test.expectedOut)
-			log.Println("ACTUAL: " + string(bytes))
-		}
+			// assert the response
+			if !assert.Equal(t, test.expectedOut, string(bytes), "Parse didn't generate the expected output.") {
+				log.Println("EXPECTED: " + test.expectedOut)
+				log.Println("ACTUAL: " + string(bytes))
+			}
+		})
 
 	}
 
