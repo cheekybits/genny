@@ -110,7 +110,7 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 
 							// if this isn't an exact match
 							if i > 0 && isAlphaNumeric(rune(word[i-1])) || i < len(word)-len(t) && isAlphaNumeric(rune(word[i+len(t)])) {
-								// replace the word with a capitolized version
+								// replace the word with a capitalized version
 								word = strings.Replace(word, t, wordify(specificType, unicode.IsUpper(rune(strings.TrimLeft(word, "*&")[0]))), 1)
 							} else {
 								// replace the word as is
