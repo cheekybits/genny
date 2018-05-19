@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/parser"
+	"go/scanner"
 	"go/token"
 	"io"
 	"os"
@@ -30,7 +31,6 @@ var (
 	importKeyword  = []byte("import")
 	openBrace      = []byte("(")
 	closeBrace     = []byte(")")
-	space          = " "
 	genericPackage = "generic"
 	genericType    = "generic.Type"
 	genericNumber  = "generic.Number"
@@ -40,6 +40,67 @@ var unwantedLinePrefixes = [][]byte{
 	[]byte("//go:generate genny "),
 }
 
+func subIntoLiteral(lit, t, specificType string) string {
+	var i int
+	var newLine string
+	for {
+		i = strings.Index(lit[i:], t) // find out where
+
+		if i <= -1 {
+			newLine = newLine + lit
+			break
+		}
+
+		// if this isn't an exact match... That is, if t exists after
+		// the start or ends before the end of the literal
+		if i > 0 || i < len(lit)-len(t) {
+			// replace the literal with a capitalized version
+			cap := wordify(specificType, unicode.IsUpper(rune(lit[0])))
+			lit = strings.Replace(lit, t, cap, 1)
+		} else {
+			// replace the literal as is
+			lit = strings.Replace(lit, t, specificType, 1)
+		}
+
+	}
+	return newLine
+}
+
+func subTypeIntoComment(l, t, specificType string) string {
+	var subbed string
+	for _, w := range strings.Fields(l) {
+		subbed = subbed + subIntoLiteral(w, t, specificType) + " "
+	}
+	return subbed
+}
+
+// Does the heavy lifting of taking a line of our code and
+// sbustituting a type into there for our generic type
+func subTypeIntoLine(l, t, specificType string) string {
+	src := []byte(l)
+	var s scanner.Scanner
+	fset := token.NewFileSet()
+	file := fset.AddFile("", fset.Base(), len(src))
+	s.Init(file, src, nil, scanner.ScanComments)
+	output := ""
+	for {
+		_, tok, lit := s.Scan()
+		if tok == token.EOF {
+			break
+		} else if tok == token.COMMENT {
+			subbed := subTypeIntoComment(lit, t, specificType)
+			output = output + subbed + " "
+		} else if tok.IsLiteral() {
+			subbed := subIntoLiteral(lit, t, specificType)
+			output = output + subbed + " "
+		} else {
+			output = output + tok.String() + " "
+		}
+	}
+	return output
+}
+
+// typeSet looks like "KeyType: int, ValueType: string"
 func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]string) ([]byte, error) {
 
 	// ensure we are at the beginning of the file
@@ -76,7 +137,6 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 		}
 	}
 
-	// go back to the start of the file
 	in.Seek(0, os.SEEK_SET)
 
 	var buf bytes.Buffer
@@ -95,35 +155,8 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 
 		for t, specificType := range typeSet {
 
-			// does the line contain our type
 			if strings.Contains(l, t) {
-
-				var newLine string
-				// check each word
-				for _, word := range strings.Fields(l) {
-
-					i := 0
-					for {
-						i = strings.Index(word[i:], t) // find out where
-
-						if i > -1 {
-
-							// if this isn't an exact match
-							if i > 0 && isAlphaNumeric(rune(word[i-1])) || i < len(word)-len(t) && isAlphaNumeric(rune(word[i+len(t)])) {
-								// replace the word with a capitolized version
-								word = strings.Replace(word, t, wordify(specificType, unicode.IsUpper(rune(strings.TrimLeft(word, "*&")[0]))), 1)
-							} else {
-								// replace the word as is
-								word = strings.Replace(word, t, specificType, 1)
-							}
-
-						} else {
-							newLine = newLine + word + space
-							break
-						}
-
-					}
-				}
+				newLine := subTypeIntoLine(l, t, specificType)
 				l = newLine
 			}
 		}
