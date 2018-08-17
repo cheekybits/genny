@@ -36,7 +36,7 @@ genny [{flags}] gen "{types}"
 gen - generates type specific code from generic code.
 get <package/file> - fetch a generic template from the online library and gen it.
 
-{types}  - (optional) Command line flags (see below)
+{flags}  - (optional) Command line flags (see below)
 {types}  - (required) Specific types for each generic type in the source
 {types} format:  {generic}={specific}[,another][ {generic2}={specific2}]
 
