@@ -1,7 +1,8 @@
 package bugreports
 
-import "github.com/justnoise/genny/generic"
+import "github.com/cheekybits/genny/generic"
 
+// Tests for issues raised in github issues #36 and #49
 type NumberType generic.Number
 
 type ObjNumberType struct {
