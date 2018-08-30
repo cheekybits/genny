@@ -9,8 +9,8 @@ import (
 // till the first call to its write function in order to prevent creation of file, if no write
 // is supposed to happen.
 type LazyFile struct {
+	// FileName is path to the file to which genny will write.
 	FileName string
-	written  []byte
 	file     *os.File
 }
 
