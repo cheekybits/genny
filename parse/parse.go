@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/parser"
+	"go/scanner"
 	"go/token"
 	"io"
 	"os"
@@ -30,7 +31,6 @@ var (
 	importKeyword  = []byte("import")
 	openBrace      = []byte("(")
 	closeBrace     = []byte(")")
-	space          = " "
 	genericPackage = "generic"
 	genericType    = "generic.Type"
 	genericNumber  = "generic.Number"
@@ -40,6 +40,63 @@ var unwantedLinePrefixes = [][]byte{
 	[]byte("//go:generate genny "),
 }
 
+func subIntoLiteral(lit, typeTemplate, specificType string) string {
+	var i int
+
+	i = strings.Index(lit[i:], typeTemplate) // find out where
+	if i <= -1 {
+		return lit
+	}
+	if i == 0 && len(typeTemplate) == len(lit) {
+		// If we're at the start of the word and it's an exact match
+		// of the literal and typeTemplate, don't wordify the replacement:
+		// subIntoLiteral("Something", "Something", "int") -> int
+
+		return strings.Replace(lit, typeTemplate, specificType, 1)
+	} else {
+		// Otherwise, wordify every replacement:
+		// subIntoLiteral("SomethingMap", "Something", int) -> IntMap
+		// subIntoLiteral("MySomething", "Something", int) -> MyInt
+		cap := wordify(specificType, unicode.IsUpper(rune(lit[0])))
+		return strings.Replace(lit, typeTemplate, cap, -1)
+	}
+}
+
+func subTypeIntoComment(line, typeTemplate, specificType string) string {
+	var subbed string
+	for _, w := range strings.Fields(line) {
+		subbed = subbed + subIntoLiteral(w, typeTemplate, specificType) + " "
+	}
+	return subbed
+}
+
+// Does the heavy lifting of taking a line of our code and
+// sbustituting a type into there for our generic type
+func subTypeIntoLine(line, typeTemplate, specificType string) string {
+	src := []byte(line)
+	var s scanner.Scanner
+	fset := token.NewFileSet()
+	file := fset.AddFile("", fset.Base(), len(src))
+	s.Init(file, src, nil, scanner.ScanComments)
+	output := ""
+	for {
+		_, tok, lit := s.Scan()
+		if tok == token.EOF {
+			break
+		} else if tok == token.COMMENT {
+			subbed := subTypeIntoComment(lit, typeTemplate, specificType)
+			output = output + subbed + " "
+		} else if tok.IsLiteral() {
+			subbed := subIntoLiteral(lit, typeTemplate, specificType)
+			output = output + subbed + " "
+		} else {
+			output = output + tok.String() + " "
+		}
+	}
+	return output
+}
+
+// typeSet looks like "KeyType: int, ValueType: string"
 func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]string) ([]byte, error) {
 
 	// ensure we are at the beginning of the file
@@ -76,7 +133,6 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 		}
 	}
 
-	// go back to the start of the file
 	in.Seek(0, os.SEEK_SET)
 
 	var buf bytes.Buffer
@@ -85,64 +141,36 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 	scanner := bufio.NewScanner(in)
 	for scanner.Scan() {
 
-		l := scanner.Text()
+		line := scanner.Text()
 
 		// does this line contain generic.Type?
-		if strings.Contains(l, genericType) || strings.Contains(l, genericNumber) {
+		if strings.Contains(line, genericType) || strings.Contains(line, genericNumber) {
 			comment = ""
 			continue
 		}
 
 		for t, specificType := range typeSet {
-
-			// does the line contain our type
-			if strings.Contains(l, t) {
-
-				var newLine string
-				// check each word
-				for _, word := range strings.Fields(l) {
-
-					i := 0
-					for {
-						i = strings.Index(word[i:], t) // find out where
-
-						if i > -1 {
-
-							// if this isn't an exact match
-							if i > 0 && isAlphaNumeric(rune(word[i-1])) || i < len(word)-len(t) && isAlphaNumeric(rune(word[i+len(t)])) {
-								// replace the word with a capitolized version
-								word = strings.Replace(word, t, wordify(specificType, unicode.IsUpper(rune(strings.TrimLeft(word, "*&")[0]))), 1)
-							} else {
-								// replace the word as is
-								word = strings.Replace(word, t, specificType, 1)
-							}
-
-						} else {
-							newLine = newLine + word + space
-							break
-						}
-
-					}
-				}
-				l = newLine
+			if strings.Contains(line, t) {
+				newLine := subTypeIntoLine(line, t, specificType)
+				line = newLine
 			}
 		}
 
 		if comment != "" {
-			buf.WriteString(line(comment))
+			buf.WriteString(makeLine(comment))
 			comment = ""
 		}
 
 		// is this line a comment?
 		// TODO: should we handle /* */ comments?
-		if strings.HasPrefix(l, "//") {
+		if strings.HasPrefix(line, "//") {
 			// record this line to print later
-			comment = l
+			comment = line
 			continue
 		}
 
 		// write the line
-		buf.WriteString(line(l))
+		buf.WriteString(makeLine(line))
 	}
 
 	// write it out
@@ -208,7 +236,7 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 			continue
 		}
 
-		cleanOutputLines = append(cleanOutputLines, line(scanner.Text()))
+		cleanOutputLines = append(cleanOutputLines, makeLine(scanner.Text()))
 	}
 
 	cleanOutput := strings.Join(cleanOutputLines, "")
@@ -229,7 +257,7 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 	return output, nil
 }
 
-func line(s string) string {
+func makeLine(s string) string {
 	return fmt.Sprintln(strings.TrimRight(s, linefeed))
 }
 
