@@ -85,6 +85,30 @@ var tests = []struct {
 		types:       []map[string]string{{"Node": "int"}},
 		expectedOut: `test/bugreports/int_digraph.go`,
 	},
+	{
+		filename:    "generic_new_and_make_slice.go",
+		in:          `test/bugreports/generic_new_and_make_slice.go`,
+		types:       []map[string]string{{"NumberType": "int"}},
+		expectedOut: `test/bugreports/int_new_and_make_slice.go`,
+	},
+	{
+		filename:    "cell_x.go",
+		in:          `test/bugreports/cell_x.go`,
+		types:       []map[string]string{{"X": "int"}},
+		expectedOut: `test/bugreports/cell_int.go`,
+	},
+	{
+		filename:    "interface_generic_type.go",
+		in:          `test/bugreports/interface_generic_type.go`,
+		types:       []map[string]string{{"GenericType": "uint8"}},
+		expectedOut: `test/bugreports/interface_uint8.go`,
+	},
+	{
+		filename:    "negation_generic.go",
+		in:          `test/bugreports/negation_generic.go`,
+		types:       []map[string]string{{"SomeThing": "string"}},
+		expectedOut: `test/bugreports/negation_string.go`,
+	},
 }
 
 func TestParse(t *testing.T) {

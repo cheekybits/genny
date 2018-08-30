@@ -8,9 +8,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path"
 	"strings"
 
+	"github.com/cheekybits/genny/out"
 	"github.com/cheekybits/genny/parse"
 )
 
@@ -61,22 +61,7 @@ func main() {
 		fatal(exitcodeInvalidTypeSet, err)
 	}
 
-	var outWriter io.Writer
-	if len(*out) > 0 {
-		err := os.MkdirAll(path.Dir(*out), 0755)
-		if err != nil {
-			fatal(exitcodeDestFileFailed, err)
-		}
-
-		outFile, err := os.Create(*out)
-		if err != nil {
-			fatal(exitcodeDestFileFailed, err)
-		}
-		defer outFile.Close()
-		outWriter = outFile
-	} else {
-		outWriter = os.Stdout
-	}
+	outWriter := newWriter(*out)
 
 	if strings.ToLower(args[0]) == "get" {
 		if len(args) != 3 {
@@ -137,6 +122,15 @@ Examples:
 
 Flags:`)
 	flag.PrintDefaults()
+}
+
+func newWriter(fileName string) io.Writer {
+	if fileName == "" {
+		return os.Stdout
+	}
+	lf := &out.LazyFile{FileName: fileName}
+	defer lf.Close()
+	return lf
 }
 
 func fatal(code int, a ...interface{}) {
