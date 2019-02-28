@@ -194,7 +194,7 @@ import (
   "log"
   "reflect"
 
-  "github.com/stretchr/gogen/generic"
+  "github.com/cheekybits/genny/generic"
 )
 
 type MyType generic.Type
