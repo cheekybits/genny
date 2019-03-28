@@ -12,10 +12,11 @@ import (
 
 var tests = []struct {
 	// input
-	filename string
-	pkgName  string
-	in       string
-	types    []map[string]string
+	filename       string
+	outputFilename string
+	pkgName        string
+	in             string
+	types          []map[string]string
 
 	// expectations
 	expectedOut string
@@ -118,7 +119,7 @@ func TestParse(t *testing.T) {
 		test.in = contents(test.in)
 		test.expectedOut = contents(test.expectedOut)
 
-		bytes, err := parse.Generics(test.filename, test.pkgName, strings.NewReader(test.in), test.types)
+		bytes, err := parse.Generics(test.filename, test.outputFilename, test.pkgName, strings.NewReader(test.in), test.types)
 
 		// check the error
 		if test.expectedErr == nil {
