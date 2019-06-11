@@ -171,7 +171,7 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 
 // Generics parses the source file and generates the bytes replacing the
 // generic types for the keys map with the specific types (its value).
-func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]string) ([]byte, error) {
+func Generics(filename, outputFilename, pkgName string, in io.ReadSeeker, typeSets []map[string]string) ([]byte, error) {
 
 	totalOutput := header
 
@@ -241,7 +241,7 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 		output = changePackage(bytes.NewReader([]byte(output)), pkgName)
 	}
 	// fix the imports
-	output, err = imports.Process(filename, output, nil)
+	output, err = imports.Process(outputFilename, output, nil)
 	if err != nil {
 		return nil, &errImports{Err: err}
 	}

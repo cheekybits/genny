@@ -62,6 +62,10 @@ func main() {
 	}
 
 	outWriter := newWriter(*out)
+	outputFilename := *out
+	if outputFilename == "" {
+		outputFilename = "stdout"
+	}
 
 	if strings.ToLower(args[0]) == "get" {
 		if len(args) != 3 {
@@ -79,7 +83,7 @@ func main() {
 		}
 		r.Body.Close()
 		br := bytes.NewReader(b)
-		err = gen(*in, *pkgName, br, typeSets, outWriter)
+		err = gen(*in, outputFilename, *pkgName, br, typeSets, outWriter)
 	} else if len(*in) > 0 {
 		var file *os.File
 		file, err = os.Open(*in)
@@ -87,7 +91,7 @@ func main() {
 			fatal(exitcodeSourceFileInvalid, err)
 		}
 		defer file.Close()
-		err = gen(*in, *pkgName, file, typeSets, outWriter)
+		err = gen(*in, outputFilename, *pkgName, file, typeSets, outWriter)
 	} else {
 		var source []byte
 		source, err = ioutil.ReadAll(os.Stdin)
@@ -95,7 +99,7 @@ func main() {
 			fatal(exitcodeStdinFailed, err)
 		}
 		reader := bytes.NewReader(source)
-		err = gen("stdin", *pkgName, reader, typeSets, outWriter)
+		err = gen("stdin", outputFilename, *pkgName, reader, typeSets, outWriter)
 	}
 
 	// do the work
@@ -139,12 +143,12 @@ func fatal(code int, a ...interface{}) {
 }
 
 // gen performs the generic generation.
-func gen(filename, pkgName string, in io.ReadSeeker, typesets []map[string]string, out io.Writer) error {
+func gen(filename, outputFilename, pkgName string, in io.ReadSeeker, typesets []map[string]string, out io.Writer) error {
 
 	var output []byte
 	var err error
 
-	output, err = parse.Generics(filename, pkgName, in, typesets)
+	output, err = parse.Generics(filename, outputFilename, pkgName, in, typesets)
 	if err != nil {
 		return err
 	}
