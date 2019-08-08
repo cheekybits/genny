@@ -74,8 +74,12 @@ func main() {
 			os.Exit(exitcodeInvalidArgs)
 		}
 		r, err := http.Get(prefix + args[1])
-		if err != nil {
-			fatal(exitcodeGetFailed, err)
+		if err != nil || r.StatusCode != 200 {
+			// Also try the non-prefixed address
+			r, err = http.Get("https://" + args[1])
+			if err != nil || r.StatusCode != 200 {
+				fatal(exitcodeGetFailed, err)
+			}
 		}
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
