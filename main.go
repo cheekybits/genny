@@ -73,19 +73,24 @@ func main() {
 			usage()
 			os.Exit(exitcodeInvalidArgs)
 		}
-		r, err := http.Get(prefix + args[1])
-		if err != nil || r.StatusCode != 200 {
-			// Also try the non-prefixed address
-			r, err = http.Get("https://" + args[1])
+		// Try a location on disk first
+		b, err := ioutil.ReadFile(args[1])
+		if err != nil {
+			// Try the default location next
+			r, err := http.Get(prefix + args[1])
 			if err != nil || r.StatusCode != 200 {
+				// Finally, try the non-prefixed internet address
+				r, err = http.Get("https://" + args[1])
+				if err != nil || r.StatusCode != 200 {
+					fatal(exitcodeGetFailed, err)
+				}
+			}
+			b, err = ioutil.ReadAll(r.Body)
+			if err != nil {
 				fatal(exitcodeGetFailed, err)
 			}
+			r.Body.Close()
 		}
-		b, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			fatal(exitcodeGetFailed, err)
-		}
-		r.Body.Close()
 		br := bytes.NewReader(b)
 		err = gen(*in, outputFilename, *pkgName, br, typeSets, outWriter)
 	} else if len(*in) > 0 {
