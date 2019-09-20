@@ -18,7 +18,7 @@ import (
 
 var header = []byte(`
 
-// Code generated https://github.com/cheekybits/genny DO NOT EDIT.
+// Code generated with https://github.com/cheekybits/genny DO NOT EDIT.
 // Any changes will be lost if this file is regenerated.
 
 `)
