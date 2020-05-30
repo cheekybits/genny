@@ -49,6 +49,7 @@ Flags:
   -in="": file to parse instead of stdin
   -out="": file to save output to instead of stdout
   -pkg="": package name for generated files
+  -tag="": build tag that is stripped from output
 ```
 
   * Comma separated type lists will generate code for each type
