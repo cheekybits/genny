@@ -112,6 +112,12 @@ var tests = []struct {
 		expectedOut: `test/bugreports/negation_string.go`,
 	},
 	{
+		filename:    "generic_comment.go",
+		in:          `test/bugreports/comment_generic.go`,
+		types:       []map[string]string{{"SomeThing": "int"}},
+		expectedOut: `test/bugreports/comment_int.go`,
+	},
+	{
 		filename:    "buildtags.go",
 		in:          `test/buildtags/buildtags.go`,
 		types:       []map[string]string{{"_t_": "int"}},

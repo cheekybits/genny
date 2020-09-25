@@ -10,6 +10,7 @@ import (
 	"go/token"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 	"unicode"
 
@@ -55,11 +56,11 @@ func subIntoLiteral(lit, typeTemplate, specificType string) string {
 }
 
 func subTypeIntoComment(line, typeTemplate, specificType string) string {
-	var subbed string
-	for _, w := range strings.Fields(line) {
-		subbed = subbed + subIntoLiteral(w, typeTemplate, specificType) + " "
+	re := regexp.MustCompile(`[a-zA-Z_][a-zA-Z0-9_]*`)
+	f := func(lit string) string {
+		return subIntoLiteral(lit, typeTemplate, specificType)
 	}
-	return subbed
+	return re.ReplaceAllStringFunc(line, f)
 }
 
 // Does the heavy lifting of taking a line of our code and
