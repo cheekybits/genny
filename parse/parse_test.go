@@ -18,6 +18,7 @@ var tests = []struct {
 	in             string
 	tag            string
 	types          []map[string]string
+	private        bool
 
 	// expectations
 	expectedOut string
@@ -35,6 +36,13 @@ var tests = []struct {
 		in:          `test/queue/generic_queue.go`,
 		types:       []map[string]string{{"Something": "int"}},
 		expectedOut: `test/queue/changed/int_queue.go`,
+	},
+	{
+		filename:    "generic_queue.go",
+		in:          `test/queue/generic_queue.go`,
+		types:       []map[string]string{{"Something": "int64"}},
+		expectedOut: `test/queue/int_queue_private.go`,
+		private:     true,
 	},
 	{
 		filename:    "generic_queue.go",
@@ -134,7 +142,7 @@ func TestParse(t *testing.T) {
 		test.in = contents(test.in)
 		test.expectedOut = contents(test.expectedOut)
 
-		bytes, err := parse.Generics(test.filename, test.outputFilename, test.pkgName, test.tag, strings.NewReader(test.in), test.types)
+		bytes, err := parse.Generics(test.filename, test.outputFilename, test.pkgName, test.tag, strings.NewReader(test.in), test.types, test.private)
 
 		// check the error
 		if test.expectedErr == nil {
