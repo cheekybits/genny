@@ -29,7 +29,21 @@ func TestWordify(t *testing.T) {
 		"pack.type":   "Packtype",
 		"*pack.type":  "Packtype",
 	} {
-		assert.Equal(t, wordified, wordify(word, true))
+		assert.Equal(t, wordified, wordify(word, true, false))
+	}
+
+	// Test non exported name generation
+	for word, wordified := range map[string]string{
+		"int":         "int",
+		"*int":        "int",
+		"string":      "string",
+		"*MyType":     "myType",
+		"*myType":     "myType",
+		"interface{}": "interface",
+		"pack.type":   "packtype",
+		"*pack.type":  "packtype",
+	} {
+		assert.Equal(t, wordified, wordify(word, true, true))
 	}
 
 }
