@@ -10,7 +10,6 @@ import (
 	"go/scanner"
 	"go/token"
 	"io"
-	"os"
 	"strings"
 	"unicode"
 
@@ -93,7 +92,10 @@ func subTypeIntoLine(line, typeTemplate, specificType string) string {
 func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]string) ([]byte, error) {
 
 	// ensure we are at the beginning of the file
-	in.Seek(0, os.SEEK_SET)
+	_, err := in.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
 
 	// parse the source file
 	fs := token.NewFileSet()
@@ -126,8 +128,10 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 		}
 	}
 
-	in.Seek(0, os.SEEK_SET)
-
+	_, err = in.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
 	var buf bytes.Buffer
 
 	comment := ""
@@ -170,6 +174,29 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 	return buf.Bytes(), nil
 }
 
+// removeFullyQualifiedImportPathAndAddToMap takes a typeset with import paths such as example.com/a/b.MyType and returns a new typeset with b.MyType.
+// It adds the package path to the extraPackagesSet, to be later added into the imports section of the generated file.
+// It returns the typeSet without package path, or an error if applicable
+func removeFullyQualifiedImportPathAndAddToMap(typeSet map[string]string, extraPackagesSet map[string]struct{}) (map[string]string, error) {
+	typeSetWithoutFullImportPaths := make(map[string]string)
+	for typeName, fullTypePath := range typeSet {
+		shortTypePath := fullTypePath
+		lastSlashIdx := strings.LastIndex(fullTypePath, "/")
+		if lastSlashIdx != -1 {
+			// there is a full package name
+			lastIdxDot := strings.LastIndex(fullTypePath, ".")
+			if lastIdxDot < lastSlashIdx {
+				return nil, errors.New("error parsing full package name: last dot index before last slash index")
+			}
+			extraPackagesSet[fullTypePath[:lastIdxDot]] = struct{}{}
+			shortTypePath = fullTypePath[lastSlashIdx+1:]
+		}
+		typeSetWithoutFullImportPaths[typeName] = shortTypePath
+	}
+
+	return typeSetWithoutFullImportPaths, nil
+}
+
 // Generics parses the source file and generates the bytes replacing the
 // generic types for the keys map with the specific types (its value).
 func Generics(filename, outputFilename, pkgName, tag string, in io.ReadSeeker, typeSets []map[string]string) ([]byte, error) {
@@ -185,26 +212,16 @@ func Generics(filename, outputFilename, pkgName, tag string, in io.ReadSeeker, t
 
 	extraPkgsMap := make(map[string]struct{})
 
-	for _, typeSet := range typeSets {
+	for _, typeSetWithPackagePaths := range typeSets {
 		// for each typeset, investigate whether it is a same-package import path (like "User"), or a long import path (like "example.com/a/b.User")
-		typeSetWithoutFullImportPaths := make(map[string]string)
-		for typeName, fullTypePath := range typeSet {
-			shortTypePath := fullTypePath
-			lastSlashIdx := strings.LastIndex(fullTypePath, "/")
-			if lastSlashIdx != -1 {
-				// there is a full package name
-				lastIdxDot := strings.LastIndex(fullTypePath, ".")
-				if lastIdxDot < lastSlashIdx {
-					return nil, errors.New("error parsing full package name: last dot index before last slash index")
-				}
-				extraPkgsMap[fullTypePath[:lastIdxDot]] = struct{}{}
-				shortTypePath = fullTypePath[lastSlashIdx+1:]
-			}
-			typeSetWithoutFullImportPaths[typeName] = shortTypePath
+		typeSet, err := removeFullyQualifiedImportPathAndAddToMap(typeSetWithPackagePaths, extraPkgsMap)
+		if err != nil {
+			return nil, err
 		}
 
 		// generate the specifics
-		parsed, err := generateSpecific(filename, in, typeSetWithoutFullImportPaths)
+		// parsed, err := generateSpecific(filename, in, typeSetWithoutFullImportPaths)
+		parsed, err := generateSpecific(filename, in, typeSet)
 		if err != nil {
 			return nil, err
 		}
@@ -277,7 +294,7 @@ func Generics(filename, outputFilename, pkgName, tag string, in io.ReadSeeker, t
 	}
 
 	// add extra imports
-	output, err = AddExtraImports(bytes.NewBuffer(output), extraPkgs)
+	output, err = addExtraImports(bytes.NewReader(output), extraPkgs)
 	if err != nil {
 		return nil, err
 	}
@@ -285,9 +302,14 @@ func Generics(filename, outputFilename, pkgName, tag string, in io.ReadSeeker, t
 	return output, nil
 }
 
-func AddExtraImports(in io.Reader, importPaths []string) ([]byte, error) {
+func addExtraImports(in io.ReadSeeker, importPaths []string) ([]byte, error) {
 	var outLines []string
 	var importBlockProcessed bool
+
+	_, err := in.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
 
 	var existingImports []string
 	var multiLineImportBlockOpen bool

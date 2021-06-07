@@ -1,7 +1,6 @@
 package parse_test
 
 import (
-	"bytes"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -171,92 +170,4 @@ func contents(s string) string {
 		return string(file)
 	}
 	return s
-}
-
-func Test_AddExtraImports(t *testing.T) {
-	type testDef struct {
-		Name         string
-		In           string
-		Out          string
-		ExtraImports []string
-	}
-
-	tests := []testDef{
-		{
-			Name: "single import",
-			In: `package x
-
-import "fmt"
-
-func sayHello(user userpkg.User) {
-	return fmt.Sprintf("hello %s", user.Name)
-}
-`,
-			Out: `package x
-
-import (
-	"fmt"
-	"example.com/me/userpkg"
-)
-
-func sayHello(user userpkg.User) {
-	return fmt.Sprintf("hello %s", user.Name)
-}
-`,
-			ExtraImports: []string{"example.com/me/userpkg"},
-		}, {
-			Name: "no imports",
-			In: `package x
-
-func sayHello(user userpkg.User) {
-	return "hello " + user.Name
-}
-`,
-			Out: `package x
-
-import (
-	"example.com/me/userpkg"
-)
-
-func sayHello(user userpkg.User) {
-	return "hello " + user.Name
-}
-`,
-			ExtraImports: []string{"example.com/me/userpkg"},
-		}, {
-			Name: "multiple imports",
-			In: `package x
-
-import (
-	"fmt"
-	"io"
-)
-
-func sayHello(writer io.Writer, user userpkg.User) {
-	return fmt.Fprintf(writer, "hello %s", user.Name)
-}
-`,
-			Out: `package x
-
-import (
-	"fmt"
-	"io"
-	"example.com/me/userpkg"
-)
-
-func sayHello(writer io.Writer, user userpkg.User) {
-	return fmt.Fprintf(writer, "hello %s", user.Name)
-}
-`,
-			ExtraImports: []string{"example.com/me/userpkg"},
-		},
-	}
-	for _, test := range tests {
-
-		out, err := parse.AddExtraImports(bytes.NewBufferString(test.In), test.ExtraImports)
-		assert.NoError(t, err)
-
-		assert.Equal(t, test.Out, string(out), test.Name)
-	}
-
 }
