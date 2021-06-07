@@ -3,13 +3,13 @@ package parse
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/scanner"
 	"go/token"
 	"io"
-	"os"
 	"strings"
 	"unicode"
 
@@ -92,7 +92,10 @@ func subTypeIntoLine(line, typeTemplate, specificType string) string {
 func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]string) ([]byte, error) {
 
 	// ensure we are at the beginning of the file
-	in.Seek(0, os.SEEK_SET)
+	_, err := in.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
 
 	// parse the source file
 	fs := token.NewFileSet()
@@ -125,8 +128,10 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 		}
 	}
 
-	in.Seek(0, os.SEEK_SET)
-
+	_, err = in.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
 	var buf bytes.Buffer
 
 	comment := ""
@@ -169,9 +174,33 @@ func generateSpecific(filename string, in io.ReadSeeker, typeSet map[string]stri
 	return buf.Bytes(), nil
 }
 
+// removeFullyQualifiedImportPathAndAddToMap takes a typeset with import paths such as example.com/a/b.MyType and returns a new typeset with b.MyType.
+// It adds the package path to the extraPackagesSet, to be later added into the imports section of the generated file.
+// It returns the typeSet without package path, or an error if applicable
+func removeFullyQualifiedImportPathAndAddToMap(typeSet map[string]string, extraPackagesSet map[string]struct{}) (map[string]string, error) {
+	typeSetWithoutFullImportPaths := make(map[string]string)
+	for typeName, fullTypePath := range typeSet {
+		shortTypePath := fullTypePath
+		lastSlashIdx := strings.LastIndex(fullTypePath, "/")
+		if lastSlashIdx != -1 {
+			// there is a full package name
+			lastIdxDot := strings.LastIndex(fullTypePath, ".")
+			if lastIdxDot < lastSlashIdx {
+				return nil, errors.New("error parsing full package name: last dot index before last slash index")
+			}
+			extraPackagesSet[fullTypePath[:lastIdxDot]] = struct{}{}
+			shortTypePath = fullTypePath[lastSlashIdx+1:]
+		}
+		typeSetWithoutFullImportPaths[typeName] = shortTypePath
+	}
+
+	return typeSetWithoutFullImportPaths, nil
+}
+
 // Generics parses the source file and generates the bytes replacing the
 // generic types for the keys map with the specific types (its value).
 func Generics(filename, outputFilename, pkgName, tag string, in io.ReadSeeker, typeSets []map[string]string) ([]byte, error) {
+	var err error
 	var localUnwantedLinePrefixes [][]byte
 	localUnwantedLinePrefixes = append(localUnwantedLinePrefixes, unwantedLinePrefixes...)
 
@@ -181,9 +210,17 @@ func Generics(filename, outputFilename, pkgName, tag string, in io.ReadSeeker, t
 
 	totalOutput := header
 
-	for _, typeSet := range typeSets {
+	extraPkgsMap := make(map[string]struct{})
+
+	for _, typeSetWithPackagePaths := range typeSets {
+		// for each typeset, investigate whether it is a same-package import path (like "User"), or a long import path (like "example.com/a/b.User")
+		typeSet, err := removeFullyQualifiedImportPathAndAddToMap(typeSetWithPackagePaths, extraPkgsMap)
+		if err != nil {
+			return nil, err
+		}
 
 		// generate the specifics
+		// parsed, err := generateSpecific(filename, in, typeSetWithoutFullImportPaths)
 		parsed, err := generateSpecific(filename, in, typeSet)
 		if err != nil {
 			return nil, err
@@ -240,7 +277,6 @@ func Generics(filename, outputFilename, pkgName, tag string, in io.ReadSeeker, t
 	cleanOutput := strings.Join(cleanOutputLines, "")
 
 	output := []byte(cleanOutput)
-	var err error
 
 	// change package name
 	if pkgName != "" {
@@ -252,7 +288,121 @@ func Generics(filename, outputFilename, pkgName, tag string, in io.ReadSeeker, t
 		return nil, &errImports{Err: err}
 	}
 
+	var extraPkgs []string
+	for importPath := range extraPkgsMap {
+		extraPkgs = append(extraPkgs, importPath)
+	}
+
+	// add extra imports
+	output, err = addExtraImports(bytes.NewReader(output), extraPkgs)
+	if err != nil {
+		return nil, err
+	}
+
 	return output, nil
+}
+
+func addExtraImports(in io.ReadSeeker, importPaths []string) ([]byte, error) {
+	var outLines []string
+	var importBlockProcessed bool
+
+	_, err := in.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
+
+	var existingImports []string
+	var multiLineImportBlockOpen bool
+	scanner := bufio.NewScanner(in)
+	for scanner.Scan() {
+		if importBlockProcessed && !multiLineImportBlockOpen {
+			outLines = append(outLines, scanner.Text())
+			continue
+		}
+
+		if multiLineImportBlockOpen {
+			switch scanner.Text() {
+			case ")":
+				multiLineImportBlockOpen = false
+				importBlockProcessed = true
+			default:
+				existingImports = append(existingImports, scanner.Text())
+			}
+			continue
+		}
+
+		if !strings.HasPrefix(scanner.Text(), "import ") {
+			// not the import line. Not interesting to us.
+			outLines = append(outLines, scanner.Text())
+			continue
+		}
+
+		// line is an import declaration. Find out if it is a one or multi line declaration
+		if strings.Contains(scanner.Text(), `"`) {
+			// one line declaration
+			importPath := strings.TrimPrefix(scanner.Text(), "import ")
+			existingImports = append(existingImports, fmt.Sprintf("\t%s", importPath))
+			importBlockProcessed = true
+			continue
+		}
+
+		// open multi-line declaration
+		multiLineImportBlockOpen = true
+	}
+	if scanner.Err() != nil {
+		return nil, scanner.Err()
+	}
+
+	var imports []string
+	imports = append(imports, existingImports...)
+
+	for _, importPath := range importPaths {
+		// if not already in imports, add to list. Otherwise skip this one
+		var isAlreadyInImports bool
+		for _, existingImport := range imports {
+			if strings.Trim(strings.TrimSpace(existingImport), `"`) == strings.Trim(strings.TrimSpace(importPath), `"`) {
+				isAlreadyInImports = true
+				break
+			}
+		}
+		if isAlreadyInImports {
+			continue
+		}
+		imports = append(imports, fmt.Sprintf("\t\"%s\"", importPath))
+	}
+
+	// add imports
+	if len(imports) != 0 {
+		var pkgDefProcessed bool
+
+		for i, outLine := range outLines {
+			if strings.HasPrefix(outLine, "package ") {
+				pkgDefProcessed = true
+				continue
+			}
+
+			if pkgDefProcessed {
+				var importBlock string
+				if len(imports) == 1 {
+					importBlock = fmt.Sprintf("\nimport %s", strings.TrimPrefix(imports[0], "\t"))
+				} else {
+					importBlock = fmt.Sprintf("\nimport (\n%s\n)", strings.Join(imports, "\n"))
+				}
+
+				if len(existingImports) == 0 {
+					// if there were no existing imports, we have to pad the end of the imports line
+					importBlock += "\n"
+				}
+				outLinesPreImport := outLines[:i]
+				outLinesPostImport := outLines[i+1:]
+
+				outLines = append(append(outLinesPreImport, importBlock), outLinesPostImport...)
+				break
+			}
+		}
+	}
+
+	return []byte(strings.Join(outLines, "\n") + "\n"), nil
 }
 
 func makeLine(s string) string {

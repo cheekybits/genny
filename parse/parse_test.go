@@ -125,6 +125,13 @@ var tests = []struct {
 		expectedOut: `test/buildtags/buildtags_expected_nostrip.go`,
 		tag:         "",
 	},
+	{
+		filename:    "buildtags.go",
+		in:          `test/extrapackages/generic_extrapackage.go`,
+		types:       []map[string]string{{"ForeignType": "github.com/cheekybits/genny/parse/test/extrapackages/extrapkg.MyType"}},
+		expectedOut: `test/extrapackages/built_extrapackage.go`,
+		tag:         "",
+	},
 }
 
 func TestParse(t *testing.T) {

@@ -20,6 +20,7 @@ const (
 //     Person=man Animal=dog Animal2=cat
 //     Person=man,woman Animal=dog,cat
 //     Person=man,woman,child Animal=dog,cat Place=london,paris
+//     Animal=example.com/a/b.Dog,example.com/a/b.Cat
 func TypeSet(arg string) ([]map[string]string, error) {
 
 	types := make(map[string][]string)
