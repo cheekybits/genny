@@ -194,7 +194,7 @@ package slice
 import (
   "log"
   "reflect"
-
+  
   "github.com/stretchr/gogen/generic"
 )
 
