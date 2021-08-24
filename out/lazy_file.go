@@ -5,8 +5,8 @@ import (
 	"path"
 )
 
-// LazyFile is an io.WriteCloser which defers creation of the file it is supposed to write in
-// till the first call to its write function in order to prevent creation of file, if no write
+// LazyFile is an io.WriteCloser which defers creation of the file it is supposed to write 
+// until the first call to its write function in order to prevent creation of file, if no write
 // is supposed to happen.
 type LazyFile struct {
 	// FileName is path to the file to which genny will write.
